@@ -54,7 +54,7 @@ class PopulateFactory extends FixtureFactory {
 			$lookup = DataList::create($class);
 		}
 
-		if($lookup) {
+		if($lookup && $lookup->count() > 0) {
 			$obj = $lookup->first();
 
 			foreach($lookup->limit(null, 1) as $old) {
