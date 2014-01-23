@@ -1,0 +1,17 @@
+{
+    "name": "dnadesign/silverstripe-populate",
+    "description": "Populate your database through YAML files",
+    "type": "silverstripe-module",
+    "keywords": ["silverstripe", "yaml"],
+    "authors": [{
+            "name": "Will Rossiter",
+            "email": "will.rossiter@dna.co.nz"
+    }],
+    "require": {
+            "silverstripe/framework": ">=3.1"
+    },
+    "extra": {
+      "installer-name": "populate"
+    },
+    "minimum-stability": "dev"
+}
