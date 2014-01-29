@@ -76,7 +76,8 @@ class PopulateFactory extends FixtureFactory {
 			$obj = parent::createObject($class, $identifier, $data);
 		}
 
-		if($obj->hasExtension('Versioned')) {
+		if($obj->hasExtension('Versioned') &&
+			in_array('Stage',$obj->config()->versioning)) {
 			$obj->publish('Stage', 'Live');
 			$obj->flushCache();
 		}
