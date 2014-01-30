@@ -77,7 +77,7 @@ class PopulateFactory extends FixtureFactory {
 		}
 
 		if($obj->hasExtension('Versioned')) {
-			$obj->publish('Stage', 'Live');
+			$obj->publish($obj->defaultStage(), 'Live');
 			$obj->flushCache();
 		}
 
