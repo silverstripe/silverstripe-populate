@@ -19,7 +19,7 @@ We normally just use Populate during the development phase of the project. After
 the project is live you may wish to remove the module from the repo.
 
 ```
-composer require "dnadesign/silverstripe-popluate:dev-master"
+composer require "dnadesign/silverstripe-populate:dev-master"
 ```
 
 ## Setup
