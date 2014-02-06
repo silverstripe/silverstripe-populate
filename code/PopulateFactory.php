@@ -17,7 +17,7 @@ class PopulateFactory extends FixtureFactory {
 		
 		if($data) {
 			foreach($data as $k => $v) {
-				if(preg_match('/^`(.)*`;$/', $v)) {
+				if(!(is_array($v)) && preg_match('/^`(.)*`;$/', $v)) {
 					$str = substr($v, 1, -2);
 					$pv = null;
 
@@ -32,12 +32,15 @@ class PopulateFactory extends FixtureFactory {
 		// from that 
 		$lookup = null;
 
+		$mode = null;
 		if(isset($data['PopulateMergeWhen'])) {
+			$mode = 'PopulateMergeWhen';
 			$lookup = DataList::create($class)->where(
 				$data['PopulateMergeWhen']
 			);
 		}
 		else if(isset($data['PopulateMergeMatch'])) {
+			$mode = 'PopulateMergeMatch';
 			$filter = array();
 
 			foreach($data['PopulateMergeMatch'] as $field) {
@@ -47,22 +50,27 @@ class PopulateFactory extends FixtureFactory {
 			if(!$filter) {
 				throw new Exception('Not a valid PopulateMergeMatch filter');
 			}
-
 			$lookup = DataList::create($class)->filter($filter);
+			//we need to unset here, as else this array will be
+			//fed to the update process and give an error
+			unset($data['PopulateMergeMatch']);
 		}
 		else if(isset($data['PopulateMergeAny'])) {
+			$mode = 'PopulateMergeAny';
 			$lookup = DataList::create($class);
 		}
 
 		if($lookup && $lookup->count() > 0) {
 			$obj = $lookup->first();
 
-			foreach($lookup->limit(null, 1) as $old) {
-				if($old->hasExtension('Versioned')) {
-					$old->deleteFromStage('Live');
-				}
+			if (!$mode == 'PopulateMergeMatch') {
+				foreach($lookup->limit(null, 1) as $old) {
+					if($old->hasExtension('Versioned')) {
+						$old->deleteFromStage('Live');
+					}
 
-				$old->delete();
+					$old->delete();
+				}
 			}
 
 			$obj->update($data);
