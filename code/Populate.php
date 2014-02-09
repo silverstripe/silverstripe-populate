@@ -35,8 +35,8 @@ class Populate extends Object {
 	 *
 	 * @throws Exception
 	 */
-	public static function requireRecords() {
-		if(self::$ran) {
+	public static function requireRecords($force = false) {
+		if(self::$ran && !$force) {
 			return true;
 		}
 
@@ -53,7 +53,9 @@ class Populate extends Object {
 			// that as well
 			foreach(DataList::create($objName) as $obj) {
 				if($obj->hasExtension('Versioned')) {
-					$obj->deleteFromStage('Live');
+					foreach($obj->getVersionedStages() as $stage) {
+						$obj->deleteFromStage($stage);
+					}
 				}
 
 				$obj->delete();

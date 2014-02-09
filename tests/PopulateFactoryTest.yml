@@ -1,0 +1,15 @@
+PopulateFactoryTest_TestObject:
+  obj1:
+    Title: Foo
+    Content: Foo Content
+  obj2:
+    Title: Bar
+    Content: Bar Content
+
+PopulateFactoryTest_TestVersionedObject:
+  objV1:
+    Title: Version Foo
+    Content: First Version
+  objV2:
+    Title: Version Bar
+    Content: First Bar Version

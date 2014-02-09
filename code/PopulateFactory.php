@@ -31,15 +31,18 @@ class PopulateFactory extends FixtureFactory {
 		// if any merge labels are defined then we should create the object
 		// from that 
 		$lookup = null;
-
 		$mode = null;
+
 		if(isset($data['PopulateMergeWhen'])) {
 			$mode = 'PopulateMergeWhen';
+
 			$lookup = DataList::create($class)->where(
 				$data['PopulateMergeWhen']
 			);
-		}
-		else if(isset($data['PopulateMergeMatch'])) {
+
+			unset($data['PopulateMergeWhen']);
+
+		} else if(isset($data['PopulateMergeMatch'])) {
 			$mode = 'PopulateMergeMatch';
 			$filter = array();
 
@@ -50,29 +53,34 @@ class PopulateFactory extends FixtureFactory {
 			if(!$filter) {
 				throw new Exception('Not a valid PopulateMergeMatch filter');
 			}
+
 			$lookup = DataList::create($class)->filter($filter);
-			//we need to unset here, as else this array will be
-			//fed to the update process and give an error
+	
 			unset($data['PopulateMergeMatch']);
-		}
-		else if(isset($data['PopulateMergeAny'])) {
+		} else if(isset($data['PopulateMergeAny'])) {
 			$mode = 'PopulateMergeAny';
 			$lookup = DataList::create($class);
+
+			unset($data['PopulateMergeAny']);
 		}
 
 		if($lookup && $lookup->count() > 0) {
 			$obj = $lookup->first();
-
-			if (!$mode == 'PopulateMergeMatch') {
-				foreach($lookup->limit(null, 1) as $old) {
-					if($old->hasExtension('Versioned')) {
-						$old->deleteFromStage('Live');
-					}
-
-					$old->delete();
+		
+			foreach($lookup as $old) {
+				if($old->ID == $obj->ID) {
+					continue;
 				}
-			}
+				
+				if($old->hasExtension('Versioned')) {
+					foreach($old->getVersionedStages() as $stage) {
+						$old->deleteFromStage($stage);
+					}
+				}
 
+				$old->delete();
+			}
+			
 			$obj->update($data);
 			$obj->write();
 
@@ -85,7 +93,14 @@ class PopulateFactory extends FixtureFactory {
 		}
 
 		if($obj->hasExtension('Versioned')) {
-			$obj->publish($obj->getDefaultStage(), 'Live');
+			foreach($obj->getVersionedStages() as $stage) {
+				if($stage !== $obj->getDefaultStage()) {
+					$obj->write();
+
+					$obj->publish($obj->getDefaultStage(), $stage);
+				}
+			}
+
 			$obj->flushCache();
 		}
 
