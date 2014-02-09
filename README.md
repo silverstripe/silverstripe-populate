@@ -1,5 +1,7 @@
 # Populate Module
 
+[![Build Status](https://secure.travis-ci.org/dnadesign/silverstripe-populate.png?branch=master)](http://travis-ci.org/dnadesign/silverstripe-populate)
+
 This module provides a way to populate a database from YAML fixtures and custom
 classes. For instance, when a building a web application the pages and default
 objects can be defined in YAML and shared around developers. This extends the
