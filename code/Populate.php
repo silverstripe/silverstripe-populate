@@ -42,8 +42,8 @@ class Populate extends Object {
 
 		self::$ran = true;
 
-		if(!Director::isDev()) {
-			throw new Exception('requireRecords can only be run in development environments');
+		if(!(Director::isDev() || Director::isTest())) {
+			throw new Exception('requireRecords can only be run in development or test environments');
 		}
 
 		$factory = Injector::inst()->create('PopulateFactory');
