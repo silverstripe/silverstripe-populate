@@ -49,16 +49,26 @@ class Populate extends Object {
 		$factory = Injector::inst()->create('PopulateFactory');
 
 		foreach(self::config()->get('truncate_objects') as $objName) {
-			// if the object has the versioned extension, make sure we delete
-			// that as well
-			foreach(DataList::create($objName) as $obj) {
-				if($obj->hasExtension('Versioned')) {
-					foreach($obj->getVersionedStages() as $stage) {
-						$obj->deleteFromStage($stage);
+			// allow truncating of tables outside of model
+			if(class_exists($objName)) {
+				foreach(DataList::create($objName) as $obj) {
+					// if the object has the versioned extension, make sure we delete
+					// that as well
+					if($obj->hasExtension('Versioned')) {
+						foreach($obj->getVersionedStages() as $stage) {
+							$obj->deleteFromStage($stage);
+						}
 					}
-				}
 
-				$obj->delete();
+					$obj->delete();
+				}
+			}
+
+			// clear all records.
+			if(method_exists(DB::getConn(), 'clearTable')) {
+				DB::getConn()->clearTable($objName);
+			} else {
+				DB::query("TRUNCATE \"$objName\"");
 			}
 		}
 
