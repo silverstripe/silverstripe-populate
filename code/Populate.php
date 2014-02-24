@@ -49,34 +49,60 @@ class Populate extends Object {
 		$factory = Injector::inst()->create('PopulateFactory');
 
 		foreach(self::config()->get('truncate_objects') as $objName) {
-			// allow truncating of tables outside of model
+			$versions = array();
+
 			if(class_exists($objName)) {
 				foreach(DataList::create($objName) as $obj) {
 					// if the object has the versioned extension, make sure we delete
 					// that as well
 					if($obj->hasExtension('Versioned')) {
 						foreach($obj->getVersionedStages() as $stage) {
+							$versions[$stage] = true;
+
 							$obj->deleteFromStage($stage);
 						}
 					}
-
-					$obj->delete();
 				}
 			}
 
-			// clear all records.
-			if(method_exists(DB::getConn(), 'clearTable')) {
-				DB::getConn()->clearTable($objName);
-			} else {
-				DB::query("TRUNCATE \"$objName\"");
+			if($versions) {
+				self::truncate_versions($objName, $versions);
 			}
+
+			foreach(ClassInfo::getValidSubClasses($objName) as $table) {
+				self::truncate_table($table);
+				self::truncate_versions($table, $versions);
+			}
+
+			self::truncate_table($objName);
 		}
 
 		foreach(self::config()->get('include_yaml_fixtures') as $fixtureFile) {
 			$fixture = new YamlFixture($fixtureFile);
 			$fixture->writeInto($factory);
+
+			$fixture = null;
 		}
+		
 
 		return true;
+	}
+
+	private static function truncate_table($table) {
+		if(ClassInfo::hasTable($table)) {
+			if(method_exists(DB::getConn(), 'clearTable')) {
+				DB::getConn()->clearTable($table);
+			} else {
+				DB::query("TRUNCATE \"$table\"");
+			}
+		}
+	}
+
+	private static function truncate_versions($table, $versions) {
+		self::truncate_table($table .'_versions');
+		
+		foreach($versions as $stage => $v) {
+			self::truncate_table($table . '_'. $stage);
+		}
 	}
 }
