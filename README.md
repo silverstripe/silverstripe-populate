@@ -147,3 +147,19 @@ record.
 If the criteria meets more than 1 instance, all instances bar the first are 
 removed from the database so ensure you criteria is specific enough to get the
 unique field value.
+
+### Default Assets
+
+The script also handles creating default File and image records through the 
+`PopulateFileFrom` flag. This copies the file from another path (say mysite) and
+puts the file inside your assets folder.
+
+```yml
+Image:
+  lgoptimusl3ii:
+    Filename: assets/shop/lgoptimusl3ii.png
+    PopulateFileFrom: app/images/demo/large.png
+
+Product:
+  lgoptimus:
+    ProductImage: =>Image.lgoptimusl3ii

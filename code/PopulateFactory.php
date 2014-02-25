@@ -28,6 +28,18 @@ class PopulateFactory extends FixtureFactory {
 			}
 		}
 
+		// for files copy the source dir if the image has a 'PopulateFileFrom'
+		if(isset($data['PopulateFileFrom'])) {
+			$folder = Folder::find_or_make(
+				str_replace('assets/', '', dirname($data['Filename']))
+			);
+
+			copy(
+				BASE_PATH . '/'. $data['PopulateFileFrom'], 
+				BASE_PATH . '/'. $data['Filename']
+			);
+		}
+
 		// if any merge labels are defined then we should create the object
 		// from that 
 		$lookup = null;
@@ -91,6 +103,7 @@ class PopulateFactory extends FixtureFactory {
 		else {
 			$obj = parent::createObject($class, $identifier, $data);
 		}
+
 
 		if($obj->hasExtension('Versioned')) {
 			foreach($obj->getVersionedStages() as $stage) {

@@ -62,6 +62,12 @@ class Populate extends Object {
 							$obj->deleteFromStage($stage);
 						}
 					}
+
+					try {
+						$obj->delete();
+					} catch(Exception $e) {
+						// notice
+					}
 				}
 			}
 
