@@ -34,7 +34,7 @@ class PopulateFactory extends FixtureFactory {
 				str_replace('assets/', '', dirname($data['Filename']))
 			);
 
-			copy(
+			@copy(
 				BASE_PATH . '/'. $data['PopulateFileFrom'], 
 				BASE_PATH . '/'. $data['Filename']
 			);
@@ -103,7 +103,6 @@ class PopulateFactory extends FixtureFactory {
 		else {
 			$obj = parent::createObject($class, $identifier, $data);
 		}
-
 
 		if($obj->hasExtension('Versioned')) {
 			foreach($obj->getVersionedStages() as $stage) {

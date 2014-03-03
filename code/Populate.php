@@ -64,7 +64,7 @@ class Populate extends Object {
 					}
 
 					try {
-						$obj->delete();
+						@$obj->delete();
 					} catch(Exception $e) {
 						// notice
 					}
