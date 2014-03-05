@@ -77,10 +77,10 @@ class PopulateFactory extends FixtureFactory {
 		}
 
 		if($lookup && $lookup->count() > 0) {
-			$obj = $lookup->first();
+			$existing = $lookup->first();
 		
 			foreach($lookup as $old) {
-				if($old->ID == $obj->ID) {
+				if($old->ID == $existing->ID) {
 					continue;
 				}
 				
@@ -92,23 +92,28 @@ class PopulateFactory extends FixtureFactory {
 
 				$old->delete();
 			}
-			
-			$obj->update($data);
-			$obj->write();
 
-			if($obj) {
-				$this->fixtures[$class][$identifier] = $obj; 
-			}
+			$blueprint = new FixtureBlueprint($class);
+			$obj = $blueprint->createObject($identifier, $data, $this->fixtures);
+
+			$existing->update($obj->toMap());
+			$existing->write();
+
+			$obj->delete();
+			
+			$this->fixtures[$class][$identifier] = $existing; 
 		}
 		else {
 			$obj = parent::createObject($class, $identifier, $data);
+
+
 		}
 
 		if($obj->hasExtension('Versioned')) {
 			foreach($obj->getVersionedStages() as $stage) {
 				if($stage !== $obj->getDefaultStage()) {
-					$obj->write();
 
+					$obj->write();
 					$obj->publish($obj->getDefaultStage(), $stage);
 				}
 			}
