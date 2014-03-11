@@ -78,7 +78,10 @@ class PopulateFactory extends FixtureFactory {
 
 		if($lookup && $lookup->count() > 0) {
 			$existing = $lookup->first();
-		
+
+			//Looping through all lookups
+			//and deleting them one by one
+			//taking versioned lookups into account
 			foreach($lookup as $old) {
 				if($old->ID == $existing->ID) {
 					continue;
@@ -93,20 +96,13 @@ class PopulateFactory extends FixtureFactory {
 				$old->delete();
 			}
 
+			//Creating new object
 			$blueprint = new FixtureBlueprint($class);
 			$obj = $blueprint->createObject($identifier, $data, $this->fixtures);
 
-			$existing->update($obj->toMap());
-			$existing->write();
-
-			$obj->delete();
-			
 			$this->fixtures[$class][$identifier] = $existing; 
-		}
-		else {
+		} else {
 			$obj = parent::createObject($class, $identifier, $data);
-
-
 		}
 
 		if($obj->hasExtension('Versioned')) {
