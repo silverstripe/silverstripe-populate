@@ -95,25 +95,29 @@ class PopulateFactory extends FixtureFactory {
 
 			$blueprint = new FixtureBlueprint($class);
 			$obj = $blueprint->createObject($identifier, $data, $this->fixtures);
+			$latest = $obj->toMap();
+			
+			unset($latest['ID']);
 
-			$existing->update($obj->toMap());
+			$existing->update($latest);
 			$existing->write();
 
 			$obj->delete();
 			
 			$this->fixtures[$class][$identifier] = $existing; 
+
+			$obj = $existing;
+			$obj->flushCache();
 		}
 		else {
 			$obj = parent::createObject($class, $identifier, $data);
-
-
 		}
 
 		if($obj->hasExtension('Versioned')) {
 			foreach($obj->getVersionedStages() as $stage) {
 				if($stage !== $obj->getDefaultStage()) {
 
-					$obj->write();
+					$obj->writeToStage($obj->getDefaultStage());
 					$obj->publish($obj->getDefaultStage(), $stage);
 				}
 			}
