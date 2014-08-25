@@ -95,6 +95,8 @@ class Populate extends Object {
 	}
 
 	private static function truncate_table($table) {
+		DB::alteration_message("Truncating Table $table", "deleted");
+
 		if(ClassInfo::hasTable($table)) {
 			if(method_exists(DB::getConn(), 'clearTable')) {
 				DB::getConn()->clearTable($table);

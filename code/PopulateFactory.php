@@ -13,7 +13,7 @@ class PopulateFactory extends FixtureFactory {
 	 * @param array $data
 	 */
 	public function createObject($class, $identifier, $data = null) {
-		DB::alteration_message("Creating $identifier ($class)");
+		DB::alteration_message("Creating $identifier ($class)", "created");
 		
 		if($data) {
 			foreach($data as $k => $v) {
