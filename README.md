@@ -163,3 +163,29 @@ Image:
 Product:
   lgoptimus:
     ProductImage: =>Image.lgoptimusl3ii
+```
+
+## Extensions
+
+The module also provides extensions that can be opted into depending on your
+project needs
+
+### PopulateMySQLExport
+
+This extension outputs the result of the Populate::requireDefaultRecords() as a
+SQL Dump on your local machine. This speeds up the process if using Populate as 
+part of a test suite or some other CI service as instead of manually calling
+the task (which will use the ORM) your test case can be fed raw MySQL to import
+and hopefully speed up execution times.
+
+To apply the extension add it to Populate, configure the path, flush, then run
+`dev/tasks/PopulateTask`
+
+```yaml
+PopulateMySQLExportExtension:
+  export_db_path: ~/path.sql
+
+Populate:
+  extensions
+    - PopulateMySQLExportExtension
+```

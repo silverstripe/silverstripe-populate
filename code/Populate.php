@@ -89,7 +89,18 @@ class Populate extends Object {
 
 			$fixture = null;
 		}
-		
+			
+		// hook allowing extensions to clean up records, modify the result or
+		// export the data to a SQL file (for importing performance).
+		$static = !(isset($this) && get_class($this) == __CLASS__);
+
+		if($static) {
+			$populate = Injector::inst()->create('Populate');
+		} else {
+			$populate = $this;
+		}
+
+		$populate->extend('onAfterPopulateRecords');
 
 		return true;
 	}
