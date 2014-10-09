@@ -62,15 +62,38 @@ one of your application models `requireDefaultRecords` methods:
 
 An array of YAML files to parse.
 	
+**mysite/_config/app.yml**
+
 	Populate:
 	  include_yaml_fixtures:
 	    - 'app/fixtures/populate.yml'
 
 *truncate_objects*
 
-An array of ClassName's whose instances are to be removed from the Database 
-prior to importing. If you do not want to truncate the entire table, simply want
-to update existing records then see Updating Records under YAML Format
+An array of ClassName's whose instances are to be removed from the database 
+prior to importing. Useful to prevent multiple copies of populated content from
+being imported. You should truncate any objects you create.
+
+**mysite/_config/app.yml**
+
+	Populate:
+	  truncate_objects:
+	    - Page
+	    - Member
+
+Truncating will automatically clear subclasses and versions. However it will not
+clear versions. You may need to describe any additional relation tables.
+
+**mysite/_config/app.yml**
+
+	Populate:
+	  truncate_objects:
+	    - Page
+	    - Member
+	    - Member_RelatedPages
+
+See *Updating Records* if you wish to merge new and old records rather than 
+clearing all of them.
 
 ## YAML Format
 
