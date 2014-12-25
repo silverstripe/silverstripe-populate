@@ -104,7 +104,7 @@ class PopulateFactory extends FixtureFactory {
 
 			$obj->delete();
 			
-			$this->fixtures[$class][$identifier] = $existing; 
+			$this->fixtures[$class][$identifier] = $existing->ID;
 
 			$obj = $existing;
 			$obj->flushCache();
