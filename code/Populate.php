@@ -75,7 +75,7 @@ class Populate extends Object {
 				self::truncate_versions($objName, $versions);
 			}
 
-			foreach(ClassInfo::getValidSubClasses($objName) as $table) {
+			foreach((array)ClassInfo::getValidSubClasses($objName) as $table) {
 				self::truncate_table($table);
 				self::truncate_versions($table, $versions);
 			}
