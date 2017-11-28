@@ -1,4 +1,4 @@
-PopulateFactoryTest_TestObject:
+DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestObject:
   obj1:
     Title: Foo
     Content: Foo Content
@@ -6,7 +6,7 @@ PopulateFactoryTest_TestObject:
     Title: Bar
     Content: Bar Content
 
-PopulateFactoryTest_TestVersionedObject:
+DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestVersionedObject:
   objV1:
     Title: Version Foo
     Content: First Version

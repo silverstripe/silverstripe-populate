@@ -1,0 +1,6 @@
+/.env
+/.idea
+/assets
+/composer.lock
+/resources
+/vendor
