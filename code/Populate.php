@@ -1,10 +1,25 @@
 <?php
 
+namespace DNADesign\Populate;
+
+use SilverStripe\Control\Director;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Extensible;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\YamlFixture;
+use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObjectSchema;
+use SilverStripe\ORM\DB;
+
 /**
  * @package populate
  */
-class Populate extends Object {
-		
+class Populate
+{
+    use Configurable;
+    use Extensible;
+
 	/**
 	 * @config
 	 *
@@ -43,10 +58,10 @@ class Populate extends Object {
 		self::$ran = true;
 
 		if(!(Director::isDev() || Director::isTest())) {
-			throw new Exception('requireRecords can only be run in development or test environments');
+			throw new \Exception('requireRecords can only be run in development or test environments');
 		}
 
-		$factory = Injector::inst()->create('PopulateFactory');
+		$factory = Injector::inst()->create('DNADesign\Populate\PopulateFactory');
 
 		foreach(self::config()->get('truncate_objects') as $objName) {
 			$versions = array();
@@ -55,7 +70,7 @@ class Populate extends Object {
 				foreach(DataList::create($objName) as $obj) {
 					// if the object has the versioned extension, make sure we delete
 					// that as well
-					if($obj->hasExtension('Versioned')) {
+					if($obj->hasExtension('SilverStripe\Versioned\Versioned')) {
 						foreach($obj->getVersionedStages() as $stage) {
 							$versions[$stage] = true;
 
@@ -65,7 +80,7 @@ class Populate extends Object {
 
 					try {
 						@$obj->delete();
-					} catch(Exception $e) {
+					} catch(\Exception $e) {
 						// notice
 					}
 				}
@@ -75,7 +90,7 @@ class Populate extends Object {
 				self::truncate_versions($objName, $versions);
 			}
 
-			foreach((array)ClassInfo::getValidSubClasses($objName) as $table) {
+			foreach((array)ClassInfo::dataClassesFor($objName) as $table) {
 				self::truncate_table($table);
 				self::truncate_versions($table, $versions);
 			}
@@ -89,13 +104,13 @@ class Populate extends Object {
 
 			$fixture = null;
 		}
-			
+
 		// hook allowing extensions to clean up records, modify the result or
 		// export the data to a SQL file (for importing performance).
 		$static = !(isset($this) && get_class($this) == __CLASS__);
 
 		if($static) {
-			$populate = Injector::inst()->create('Populate');
+			$populate = Injector::inst()->create(Populate::class);
 		} else {
 			$populate = $this;
 		}
@@ -105,12 +120,19 @@ class Populate extends Object {
 		return true;
 	}
 
-	private static function truncate_table($table) {
-		DB::alteration_message("Truncating Table $table", "deleted");
+	private static function truncate_table($class) {
+        /** @var DataObjectSchema $schema */
+	    $schema = Injector::inst()->get(DataObjectSchema::class);
+        $split = explode('_', $class);
+        $table = $schema->tableName($split[0]);
+
+        if(!empty($split[1])) $table = sprintf('%s_%s', $table, $split[1]); // Re-add '_versions' etc.
+
+	    DB::alteration_message("Truncating table $table", "deleted");
 
 		if(ClassInfo::hasTable($table)) {
-			if(method_exists(DB::getConn(), 'clearTable')) {
-				DB::getConn()->clearTable($table);
+			if(method_exists(DB::get_conn(), 'clearTable')) {
+				DB::get_conn()->clearTable($table);
 			} else {
 				DB::query("TRUNCATE \"$table\"");
 			}
@@ -119,7 +141,7 @@ class Populate extends Object {
 
 	private static function truncate_versions($table, $versions) {
 		self::truncate_table($table .'_versions');
-		
+
 		foreach($versions as $stage => $v) {
 			self::truncate_table($table . '_'. $stage);
 		}

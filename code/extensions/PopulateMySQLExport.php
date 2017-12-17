@@ -1,5 +1,13 @@
 <?php
 
+namespace DNADesign\Populate;
+
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Extension;
+use SilverStripe\ORM\DB;
+
 /**
  * An extension for {@link Populate} which, when applied, exports the result of
  * the database to a file path on the server through mysqldump.
@@ -21,7 +29,8 @@
  * @package populate
  */
 class PopulateMySQLExportExtension extends Extension {
-	
+	use Configurable;
+
 	/**
 	 * @config
 	 */
@@ -56,7 +65,7 @@ class PopulateMySQLExportExtension extends Extension {
 			$create = $row2->nextRecord();
 			$create = str_replace("\"", "`", $create);
 			$return.= "\n\n".$create['Create Table'].";\n\n";
-			
+
 
 			$result = DB::query("SELECT * FROM `$table`");
 			while($row = $result->nextRecord()) {
@@ -65,14 +74,14 @@ class PopulateMySQLExportExtension extends Extension {
 				foreach($row as $k => $v) {
 					$v = addslashes($v);
 					$v = str_replace("\n", "\\n", $v);
-					
+
 					if($v) {
 						$return.= '"'.$v.'"' ;
 					} else {
 						$return.= '""';
 					}
 
-					$return.= ','; 
+					$return.= ',';
 				}
 
 				$return = rtrim($return, ',');
@@ -81,7 +90,7 @@ class PopulateMySQLExportExtension extends Extension {
 		}
 
 		$return.="\n\n\n";
-		
+
 
 
 		$handle = fopen($path,'w+');

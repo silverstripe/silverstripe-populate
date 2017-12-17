@@ -1,23 +1,39 @@
 <?php
 
+namespace DNADesign\Populate\Tests;
+
+use DNADesign\Populate\PopulateFactory;
+use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestObject;
+use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestVersionedObject;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Dev\TestOnly;
+use SilverStripe\Versioned\Versioned;
+
+
 /**
  * @package populate
  */
-class PopulateFactoryTest extends SapphireTest {
-	
-	protected static $fixture_file = "PopulateFactoryTest.yml";
+class PopulateFactoryTest extends SapphireTest implements TestOnly {
 
-	protected $extraDataObjects = array(
-		'PopulateFactoryTest_TestObject',
-		'PopulateFactoryTest_TestVersionedObject'
+    /**
+     * @var PopulateFactory
+     */
+	private $factory;
+
+    protected static $fixture_file = "PopulateFactoryTest.yml";
+
+    protected $usesDatabase = true;
+
+    protected static $extra_dataobjects = array(
+		PopulateFactoryTestObject::class,
+        PopulateFactoryTestVersionedObject::class
 	);
 
-	public function setUp() {
-		parent::setUp();
-
-		$this->factory = new PopulateFactory();
-	}
-
+    public function setUp()
+    {
+        parent::setUp();
+        $this->factory = new PopulateFactory();
+    }
 
 	/**
 	 * Test version support. If an object has versioned then both the live and
@@ -25,13 +41,11 @@ class PopulateFactoryTest extends SapphireTest {
 	 * as well.
 	 */
 	public function testVersionedObjects() {
-		$versioned = $this->objFromFixture(
-			'PopulateFactoryTest_TestVersionedObject', 'objV1'
-		);
+		$versioned = $this->objFromFixture(PopulateFactoryTestVersionedObject::class, 'objV1');
 
 		$versioned->publish('Stage', 'Live');
 
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestVersionedObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestVersionedObject::class, 'test', array(
 			'Content' => 'Updated Version Foo',
 			'PopulateMergeWhen' => "Title = 'Version Foo'"
 		));
@@ -40,8 +54,8 @@ class PopulateFactoryTest extends SapphireTest {
 		$this->assertEquals('Updated Version Foo', $obj->Content);
 
 		$check = Versioned::get_one_by_stage(
-			'PopulateFactoryTest_TestVersionedObject', 
-			'Live', 
+			PopulateFactoryTestVersionedObject::class,
+			'Live',
 			"Title = 'Version Foo'"
 		);
 
@@ -53,7 +67,7 @@ class PopulateFactoryTest extends SapphireTest {
 	 * Field: `something::foo()`;
 	 */
 	public function testCreateObjectPhpEval() {
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', array(
 			'Title' => '`sprintf("hi")`;'
 		));
 
@@ -63,17 +77,17 @@ class PopulateFactoryTest extends SapphireTest {
 	/**
 	 * When a populatemergewhen clause is supplied, make sure it merges. If no
 	 * record found, one should be created
-	 * 
+	 *
 	 */
 	public function testCreateObjectPopulateMergeWhen() {
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', array(
 			'Title' => 'Updated',
 			'PopulateMergeWhen' => "Title = 'Foo'"
 		));
 
 		$this->assertEquals('Foo Content', $obj->Content, 'Records merged');
 
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', array(
 			'Title' => 'Updated',
 			'PopulateMergeWhen' => "Title = 'This title is unknown'"
 		));
@@ -87,11 +101,11 @@ class PopulateFactoryTest extends SapphireTest {
 	 * the given fields
 	 */
 	public function testCreateObjectPopulateMergeMatch() {
-		$id = PopulateFactoryTest_TestObject::get()->filter(array(
+		$id = PopulateFactoryTestObject::get()->filter(array(
 			'Title' => 'Foo'
 		))->first()->ID;
 
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', array(
 			'Title' => 'Foo',
 			'Content' => 'This has been replaced',
 			'PopulateMergeMatch' => array(
@@ -104,49 +118,19 @@ class PopulateFactoryTest extends SapphireTest {
 	}
 
 	/**
-	 * When a lookup matches more than one page, only the first one should be 
+	 * When a lookup matches more than one page, only the first one should be
 	 * removed.
 	 */
 	public function testMultipleMatchesRemoved() {
-		$obj = $this->factory->createObject('PopulateFactoryTest_TestObject', 'test', array(
+		$obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', array(
 			'Title' => 'Updated',
 			'PopulateMergeAny' => true
 		));
 
-		$list = PopulateFactoryTest_TestObject::get();
+		$list = PopulateFactoryTestObject::get();
 
 		$this->assertEquals(1, $list->count());
 		$this->assertEquals('Updated', $list->first()->Title);
 	}
 
-}
-
-/**
- * @package populate
- */
-class PopulateFactoryTest_TestObject extends DataObject implements TestOnly {
-
-	private static $db = array(
-		'Title' => 'Varchar',
-		'Content' => 'Varchar'
-	);
-
-	private static $has_one = array(
-		'RelatedTest' => 'PopulateTest_TestObject'
-	);
-}
-
-/**
- * @package populate
- */
-class PopulateFactoryTest_TestVersionedObject extends DataObject implements TestOnly {
-
-	private static $db = array(
-		'Title' => 'Varchar',
-		'Content' => 'Varchar'
-	);
-
-	private static $extensions = array(
-		"Versioned('Stage', 'Live')"
-	);
 }
