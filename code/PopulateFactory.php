@@ -90,9 +90,9 @@ class PopulateFactory extends FixtureFactory {
             $file->ParentID = $folder->ID;
             $f = $file->toMap();
 
-            $data['FileHash'] = $f['FileHash'];
-            $data['FileFilename'] = $f['FileFilename'];
-            $data['ParentID'] = $f['ParentID'];
+            $data['FileHash'] = $f['File']->Hash;
+            $data['FileFilename'] = $f['File']->Filename;
+            $data['ParentID'] = $f['File']->ParentID;
 		}
 
 		// if any merge labels are defined then we should create the object
