@@ -140,7 +140,7 @@ class Populate
 	}
 
 	private static function truncate_versions($table, $versions) {
-		self::truncate_table($table .'_versions');
+		self::truncate_table($table .'_Versions');
 
 		foreach($versions as $stage => $v) {
 			self::truncate_table($table . '_'. $stage);
