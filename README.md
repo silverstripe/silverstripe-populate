@@ -125,6 +125,8 @@ Relations are handled by referring to them by their reference value:
 	Page:
 	  homepage:
 	    AuthorID: =>SilverStripe\Security\Member.admin
+        
+See [SilverStripe's fixture documentation](https://docs.silverstripe.org/en/4/developer_guides/testing/fixtures/) for more advanced examples, including `$many_many` and `$many_many_extraFields`.
 
 Any object which implements the `Versioned` extension will be automatically
 published.
