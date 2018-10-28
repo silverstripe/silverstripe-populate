@@ -3,6 +3,7 @@
 namespace DNADesign\Populate;
 
 use Exception;
+use InvalidArgumentException;
 use phpDocumentor\Reflection\DocBlock\Tags\Version;
 use SilverStripe\Assets\File;
 use SilverStripe\Assets\Folder;
@@ -19,6 +20,13 @@ use SilverStripe\Versioned\Versioned;
  * @package populate
  */
 class PopulateFactory extends FixtureFactory {
+	/**
+	 * List of fixtures that failed to be created due to YAML fixture lookup failures (e.g. because of a dependency that
+	 * isn't met at the time of creation). We re-try creation of these after all other fixtures have been created.
+	 *
+	 * @var array
+	 */
+	private $failedFixtures = [];
 
 	/**
 	 * Creates the object in the database as the original object will be wiped.
@@ -168,7 +176,22 @@ class PopulateFactory extends FixtureFactory {
 			$obj->flushCache();
 		}
 		else {
-			$obj = parent::createObject($class, $identifier, $data);
+			try {
+				$obj = parent::createObject($class, $identifier, $data);
+			} catch (InvalidArgumentException $e) {
+				$this->failedFixtures[] = [
+					'class' => $class,
+					'id' => $identifier,
+					'data' => $data
+				];
+
+				DB::alteration_message(
+					sprintf('Failed to create %s (%s), queueing for later', $identifier, $class),
+					'error'
+				);
+
+				return null;
+			}
 		}
 
 		if ($obj->hasExtension(Versioned::class)) {
@@ -182,5 +205,22 @@ class PopulateFactory extends FixtureFactory {
 		}
 
 		return $obj;
+	}
+
+	public function processFailedFixtures()
+	{
+		if ($this->failedFixtures) {
+			foreach ($this->failedFixtures as $fixture) {
+				// createObject returns null if the object failed to create
+				$obj = $this->createObject($fixture['class'], $fixture['id'], $fixture['data']);
+
+				if (is_null($obj)) {
+					DB::alteration_message(
+						sprintf('Final attempt to create %s (%s) still failed', $fixture['id'], $fixture['class']),
+						'error'
+					);
+				}
+			}
+		}
 	}
 }
