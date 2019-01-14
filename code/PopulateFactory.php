@@ -15,6 +15,7 @@ use SilverStripe\Dev\FixtureFactory;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DB;
 use SilverStripe\Versioned\Versioned;
+use function sizeof;
 
 /**
  * @package populate
@@ -185,6 +186,8 @@ class PopulateFactory extends FixtureFactory {
 					'data' => $data
 				];
 
+				DB::alteration_message(sprintf('Exception: %s', $e->getMessage()), 'error');
+
 				DB::alteration_message(
 					sprintf('Failed to create %s (%s), queueing for later', $identifier, $class),
 					'error'
@@ -207,20 +210,49 @@ class PopulateFactory extends FixtureFactory {
 		return $obj;
 	}
 
-	public function processFailedFixtures()
+    /**
+     * @param bool $recurse Marker for whether we are recursing - should be false when calling from outside this method
+     * @throws Exception
+     */
+	public function processFailedFixtures($recurse = false)
 	{
 		if ($this->failedFixtures) {
-			foreach ($this->failedFixtures as $fixture) {
+            $failed = $this->failedFixtures;
+		    $numFailing = sizeof($failed);
+
+		    // Reset $this->failedFixtures so that continual failures can be re-attempted
+		    $this->failedFixtures = [];
+
+			foreach ($failed as $fixture) {
 				// createObject returns null if the object failed to create
+                // This also re-populates $this->failedFixtures so we can re-compare
 				$obj = $this->createObject($fixture['class'], $fixture['id'], $fixture['data']);
 
 				if (is_null($obj)) {
 					DB::alteration_message(
-						sprintf('Final attempt to create %s (%s) still failed', $fixture['id'], $fixture['class']),
+						sprintf('Further attempt to create %s (%s) still failed', $fixture['id'], $fixture['class']),
 						'error'
 					);
 				}
 			}
+
+			if (sizeof($this->failedFixtures) > 0 && sizeof($failed) > sizeof($this->failedFixtures)) {
+			    // We made some progress because there are less failed fixtures now than there were before, so run again
+                $this->processFailedFixtures(true);
+            }
+
+            // Our final run gets here - either we made no progress on object creation, or there were some fixtures with
+            // broken or circular relations that can't be resolved - list these at the end.
+            if (!$recurse && sizeof($this->failedFixtures) > 0) {
+			    $message = sprintf("Some fixtures (%d) couldn't be created:", sizeof($this->failedFixtures));
+			    DB::alteration_message("");
+                DB::alteration_message("");
+                DB::alteration_message($message, "error");
+
+                foreach ($this->failedFixtures as $fixture) {
+                    DB::alteration_message(sprintf('%s (%s)', $fixture['id'], $fixture['class']));
+                }
+            }
 		}
 	}
 }
