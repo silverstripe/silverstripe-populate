@@ -2,15 +2,20 @@
 
 namespace DNADesign\Populate;
 
+use Exception;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\YamlFixture;
-use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObjectSchema;
+use SilverStripe\ORM\Connect\DatabaseException;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
+use SilverStripe\Versioned\Versioned;
+use TractorCow\Fluent\Extension\FluentExtension;
+use TractorCow\Fluent\Extension\FluentVersionedExtension;
 
 /**
  * @package populate
@@ -20,130 +25,154 @@ class Populate
     use Configurable;
     use Extensible;
 
-	/**
-	 * @config
-	 *
-	 * @var array
-	 */
-	private static $include_yaml_fixtures = array();
+    /**
+     * @config
+     *
+     * @var array
+     */
+    private static $include_yaml_fixtures = [];
 
-	/**
-	 * @config
-	 *
-	 * An array of classes to clear from the database before importing. While
-	 * populating sitetree it may be worth clearing the 'SiteTree' table.
-	 *
-	 * @var array
-	 */
-	private static $truncate_objects = array();
+    /**
+     * @config
+     *
+     * An array of classes to clear from the database before importing. While
+     * populating SiteTree it may be worth clearing the 'SiteTree' table.
+     *
+     * @var array
+     */
+    private static $truncate_classes = [];
 
-	/**
-	 * Flag to determine if we're already run for this session (i.e to prevent
-	 * parent calls invoking {@link requireRecords} twice).
-	 *
-	 * @var bool
-	 */
-	private static $ran = false;
+    /**
+     * @config
+     *
+     * @var array - Tables that will be truncated
+     */
+    private static $truncate_tables = [];
 
-	/**
-	 * @var bool
-	 *
-	 * @throws Exception
-	 */
-	public static function requireRecords($force = false) {
-		if(self::$ran && !$force) {
-			return true;
-		}
+    /**
+     * Flag to determine if we're already run for this session (i.e to prevent
+     * parent calls invoking {@link requireRecords} twice).
+     *
+     * @var bool
+     */
+    private static $ran = false;
 
-		self::$ran = true;
+    /**
+     * @var string[] - Used internally to not truncate multiple tables multiple times
+     */
+    private static $clearedTables = [];
 
-		if(!(Director::isDev() || Director::isTest())) {
-			throw new \Exception('requireRecords can only be run in development or test environments');
-		}
+    /**
+     * @param bool $force - allows you to bypass the ran check to run this multiple times
+     * @return bool
+     * @throws Exception
+     */
+    public static function requireRecords($force = false): bool
+    {
+        if (self::$ran && !$force) {
+            return true;
+        }
 
-		$factory = Injector::inst()->create('DNADesign\Populate\PopulateFactory');
+        self::$ran = true;
 
-		foreach(self::config()->get('truncate_objects') as $objName) {
-			$versions = array();
+        if (!(Director::isDev() || Director::isTest())) {
+            throw new Exception('requireRecords can only be run in development or test environments');
+        }
 
-			if(class_exists($objName)) {
-				foreach(DataList::create($objName) as $obj) {
-					// if the object has the versioned extension, make sure we delete
-					// that as well
-					if($obj->hasExtension('SilverStripe\Versioned\Versioned')) {
-						foreach($obj->getVersionedStages() as $stage) {
-							$versions[$stage] = true;
+        $factory = Injector::inst()->create('DNADesign\Populate\PopulateFactory');
 
-							$obj->deleteFromStage($stage);
-						}
-					}
+        foreach (self::config()->get('truncate_classes') as $class) {
+            self::deleteClass($class);
+        }
 
-					try {
-						@$obj->delete();
-					} catch(\Exception $e) {
-						// notice
-					}
-				}
-			}
+        foreach (self::config()->get('truncate_tables') as $table) {
+            self::truncateTable($table);
+        }
 
-			if($versions) {
-				self::truncate_versions($objName, $versions);
-			}
+        foreach (self::config()->get('include_yaml_fixtures') as $fixtureFile) {
+            $fixture = new YamlFixture($fixtureFile);
+            $fixture->writeInto($factory);
 
-			foreach((array)ClassInfo::dataClassesFor($objName) as $table) {
-				self::truncate_table($table);
-				self::truncate_versions($table, $versions);
-			}
+            $fixture = null;
+        }
 
-			self::truncate_table($objName);
-		}
+        $populate = Injector::inst()->create(Populate::class);
+        $populate->extend('onAfterPopulateRecords');
 
-		foreach(self::config()->get('include_yaml_fixtures') as $fixtureFile) {
-			$fixture = new YamlFixture($fixtureFile);
-			$fixture->writeInto($factory);
+        return true;
+    }
 
-			$fixture = null;
-		}
+    /*
+     * Delete all the associated tables for a class
+     */
+    private static function deleteClass(string $class): void
+    {
+        // First delete the base classes
+        $tableClasses = ClassInfo::ancestry($class, true);
+        foreach ($tableClasses as $tableClass) {
+            $table = DataObject::getSchema()->tableName($tableClass);
+            self::truncateTable($table);
+        }
 
-		// hook allowing extensions to clean up records, modify the result or
-		// export the data to a SQL file (for importing performance).
-		$static = !(isset($this) && get_class($this) == __CLASS__);
+        /** @var DataObject|FluentExtension|Versioned $obj */
+        $obj = Injector::inst()->get($class);
 
-		if($static) {
-			$populate = Injector::inst()->create(Populate::class);
-		} else {
-			$populate = $this;
-		}
+        $versionedTables = [];
+        $hasVersionedExtension = $obj->hasExtension(Versioned::class);
 
-		$populate->extend('onAfterPopulateRecords');
+        if ($hasVersionedExtension) {
+            $baseTableName = Config::inst()->get($class, 'table_name');
+            $stages = $obj->getVersionedStages();
 
-		return true;
-	}
+            foreach ($stages as $stage) {
+                $table = $obj->stageTable($baseTableName, $stage);
+                self::truncateTable($table);
+                $versionedTables[] = $table;
+            }
+        }
 
-	private static function truncate_table($class) {
-        /** @var DataObjectSchema $schema */
-	    $schema = Injector::inst()->get(DataObjectSchema::class);
-        $split = explode('_', $class);
-        $table = $schema->tableName($split[0]);
+        if ($obj->hasExtension(FluentExtension::class)) {
+            // Fluent passes back `['table_name' => ['arrayOfLocalisedFields']]`
+            $localisedTables = array_keys($obj->getLocalisedTables());
 
-        if(!empty($split[1])) $table = sprintf('%s_%s', $table, $split[1]); // Re-add '_versions' etc.
+            foreach ($localisedTables as $localisedTable) {
+                $table = $obj->getLocalisedTable($localisedTable);
+                self::truncateTable($table);
 
-	    DB::alteration_message("Truncating table $table", "deleted");
+                if ($hasVersionedExtension) {
+                    self::truncateTable($table . FluentVersionedExtension::SUFFIX_VERSIONS);
+                }
+            }
 
-		if(ClassInfo::hasTable($table)) {
-			if(method_exists(DB::get_conn(), 'clearTable')) {
-				DB::get_conn()->clearTable($table);
-			} else {
-				DB::query("TRUNCATE \"$table\"");
-			}
-		}
-	}
+            if ($hasVersionedExtension) {
+                foreach ($versionedTables as $versionedTable) {
+                    $table = $obj->getLocalisedTable($versionedTable);
+                    self::truncateTable($table);
+                }
+            }
+        }
 
-	private static function truncate_versions($table, $versions) {
-		self::truncate_table($table .'_Versions');
+    }
 
-		foreach($versions as $stage => $v) {
-			self::truncate_table($table . '_'. $stage);
-		}
-	}
+    /*
+     * Attempts to truncate a table if it hasn't already been truncated
+     */
+    private static function truncateTable(string $table): void
+    {
+        if (array_key_exists($table, self::$clearedTables)) {
+            DB::alteration_message("$table already truncated", "deleted");
+
+            return;
+        }
+
+        DB::alteration_message("Truncating table $table", "deleted");
+
+        try {
+            DB::get_conn()->clearTable($table);
+        } catch (DatabaseException $databaseException) {
+            DB::alteration_message("Couldn't truncate table $table as it doesn't exist", "deleted");
+        }
+
+        self::$clearedTables[$table] = true;
+    }
 }
