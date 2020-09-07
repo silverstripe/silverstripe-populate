@@ -77,12 +77,12 @@ DNADesign\Populate\Populate:
     - 'app/fixtures/populate.yml'
 ```
 
-`truncate_classes`:  An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. You should truncate any objects you create. (Supports Fleunt and Versioned objects)
+`truncate_objects`:  An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. You should truncate any objects you create. (Supports Fleunt and Versioned objects)
 
 Example:
 ```yaml
 DNADesign\Populate\Populate:
-  truncate_classes:
+  truncate_objects:
     - SilverStripe\Assets\Image
 ```
 

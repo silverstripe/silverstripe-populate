@@ -13,9 +13,6 @@ use SilverStripe\Dev\YamlFixture;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
-use SilverStripe\Versioned\Versioned;
-use TractorCow\Fluent\Extension\FluentExtension;
-use TractorCow\Fluent\Extension\FluentVersionedExtension;
 
 /**
  * @package populate
@@ -81,8 +78,8 @@ class Populate
 
         $factory = Injector::inst()->create('DNADesign\Populate\PopulateFactory');
 
-        foreach (self::config()->get('truncate_classes') as $class) {
-            self::deleteClass($class);
+        foreach (self::config()->get('truncate_objects') as $className) {
+            self::truncateObject($className);
         }
 
         foreach (self::config()->get('truncate_tables') as $table) {
@@ -102,60 +99,78 @@ class Populate
         return true;
     }
 
-    /*
+    /**
      * Delete all the associated tables for a class
+     *
+     * @param string $className
      */
-    private static function deleteClass(string $class): void
+    private static function truncateObject(string $className): void
     {
-        // First delete the base classes
-        $tableClasses = ClassInfo::ancestry($class, true);
-        foreach ($tableClasses as $tableClass) {
-            $table = DataObject::getSchema()->tableName($tableClass);
-            self::truncateTable($table);
+        $tables = [];
+
+        // All acenstors or children with tables
+        $withTables = array_filter(
+            array_merge(
+                ClassInfo::ancestry($className),
+                ClassInfo::subclassesFor($className)
+            ),
+            function ($next) {
+                return DataObject::getSchema()->classHasTable($next);
+            }
+        );
+
+        $classTables = [];
+
+        foreach ($withTables as $className) {
+            $classTables[$className] = DataObject::getSchema()->tableName($className);
         }
 
-        /** @var DataObject|FluentExtension|Versioned $obj */
-        $obj = Injector::inst()->get($class);
+        // Establish tables which store object data that needs to be truncated
+        foreach ($classTables as $className => $baseTable) {
+            /** @var DataObject|SilverStripe\Versioned\Versioned $obj */
+            $obj = Injector::inst()->get($className);
 
-        $versionedTables = [];
-        $hasVersionedExtension = $obj->hasExtension(Versioned::class);
+            // Include base tables
+            $tables[$baseTable] = $baseTable;
 
-        if ($hasVersionedExtension) {
-            $baseTableName = Config::inst()->get($class, 'table_name');
+            if (!$obj->hasExtension('SilverStripe\Versioned\Versioned')) {
+                // No versioned tables to clear
+                continue;
+            }
+
             $stages = $obj->getVersionedStages();
 
             foreach ($stages as $stage) {
-                $table = $obj->stageTable($baseTableName, $stage);
-                self::truncateTable($table);
-                $versionedTables[] = $table;
+                $table = $obj->stageTable($baseTable, $stage);
+
+                // Include staged table(s)
+                $tables[$table] = $table;
             }
+
+            $versionedTable = "{$baseTable}_Versions";
+
+            // Include versions table
+            $tables[$versionedTable] = $versionedTable;
         }
 
-        if ($obj->hasExtension(FluentExtension::class)) {
-            // Fluent passes back `['table_name' => ['arrayOfLocalisedFields']]`
-            $localisedTables = array_keys($obj->getLocalisedTables());
+        $populate = Injector::inst()->create(Populate::class);
+        $populate->extend('updateTruncateObjectTables', $tables, $className, $classTables);
 
-            foreach ($localisedTables as $localisedTable) {
-                $table = $obj->getLocalisedTable($localisedTable);
-                self::truncateTable($table);
-
-                if ($hasVersionedExtension) {
-                    self::truncateTable($table . FluentVersionedExtension::SUFFIX_VERSIONS);
-                }
+        foreach ($tables as $table) {
+            if (!DB::get_schema()->hasTable($table)) {
+                // No table to clear
+                continue;
             }
 
-            if ($hasVersionedExtension) {
-                foreach ($versionedTables as $versionedTable) {
-                    $table = $obj->getLocalisedTable($versionedTable);
-                    self::truncateTable($table);
-                }
-            }
+            self::truncateTable($table);
         }
-
     }
 
-    /*
-     * Attempts to truncate a table if it hasn't already been truncated
+    /**
+     * Attempts to truncate a table. Outputs messages to indicate if table has
+     * already been truncated or cannot be truncated
+     *
+     * @param string $table
      */
     private static function truncateTable(string $table): void
     {
