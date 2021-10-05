@@ -171,13 +171,11 @@ class PopulateFactory extends FixtureFactory {
 			$obj = parent::createObject($class, $identifier, $data);
 		}
 
-		if($obj->hasExtension(Versioned::class)) {
-			foreach($obj->getVersionedStages() as $stage) {
-				if($stage !== Versioned::DRAFT) {
-
-					$obj->writeToStage(Versioned::DRAFT);
-					$obj->publish(Versioned::DRAFT, $stage);
-				}
+		if ($obj->hasExtension(Versioned::class)) {
+			if (Populate::config()->get('enable_publish_recursive')) {
+				$obj->publishRecursive();
+			} else {
+				$obj->publishSingle();
 			}
 
 			$obj->flushCache();
