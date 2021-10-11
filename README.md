@@ -222,3 +222,7 @@ DNADesign\Populate\Populate:
   extensions
     - DNADesign\Populate\PopulateMySQLExportExtension
 ```
+
+## Credits
+
+silverstripe-populate was originally created by [wilr](https://github.com/wilr) and [DNA Design](https://www.dna.co.nz/).
