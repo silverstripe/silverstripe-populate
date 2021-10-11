@@ -7,10 +7,6 @@ classes. For instance, when a building a web application the pages and default
 objects can be defined in YAML and shared around developers. This extends the
 `requireDefaultRecords` concept in SilverStripe's DataModel.
 
-## Maintainer Contact
-
- * Will Rossiter (wilr, will.rossiter@dna.co.nz)
-
 ## Requirements
 
  * SilverStripe 4 ([framework](https://github.com/silverstripe/silverstripe-framework) only)
