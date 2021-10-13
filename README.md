@@ -7,10 +7,6 @@ classes. For instance, when a building a web application the pages and default
 objects can be defined in YAML and shared around developers. This extends the
 `requireDefaultRecords` concept in SilverStripe's DataModel.
 
-## Maintainer Contact
-
- * Will Rossiter (wilr, will.rossiter@dna.co.nz)
-
 ## Requirements
 
  * SilverStripe 4 ([framework](https://github.com/silverstripe/silverstripe-framework) only)
@@ -26,16 +22,16 @@ composer require dnadesign/silverstripe-populate --dev
 
 First create a new `yml` config file in your config directory `config/populate.yml` (you can use the default `_config.yml` if wanted).
 
-In that file you can now link to your fixture files
 ```yaml
-  DNADesign\Populate\Populate:
-    include_yaml_fixtures:
-      - 'mysite/fixtures/populate.yml'
+DNADesign\Populate\Populate:
+  include_yaml_fixtures:
+    - 'mysite/fixtures/populate.yml'
 ```
 
 *If you're sharing test setup with populate, you can specify any number of paths to load fixtures from.*
 
 An example populate.yml might look like the following:
+
 ```yaml
 Page:
   home:
@@ -46,14 +42,17 @@ SilverStripe\Security\Member:
   admin:
     ID: 1
     Email: "admin@example.com"
-      PopulateMergeMatch:
-        - 'ID'
-        - 'Email'
+    PopulateMergeMatch:
+      - 'ID'
+      - 'Email'
 ```
 
 Out of the box, the records will be created on when you run the `PopulateTask`
-through `/dev/tasks/populate-task/`. To make it completely transparent to
-developers during the application build, you can also include this to hook in on `requireDefaultRecords` as part of `dev/build` by including the following in one of your application models `requireDefaultRecords` methods:
+through `/dev/tasks/PopulateTask/`. To make it completely transparent to
+developers during the application build, you can also include this to hook in on
+`requireDefaultRecords` as part of `dev/build` by including the following in
+one of your application models `requireDefaultRecords` methods:
+
 ```php
 use DNADesign\Populate\Populate;
 
@@ -66,29 +65,36 @@ class Page extends SiteTree
     }
 }
 ```
+
 ## Configuration options
 
-`include_yaml_fixtures`: An array of YAML files to parse.
+*include_yaml_fixtures*
 
-Example:
+An array of YAML files to parse.
+
+**mysite/_config/app.yml**
+
 ```yaml
 DNADesign\Populate\Populate:
   include_yaml_fixtures:
     - 'app/fixtures/populate.yml'
 ```
 
-`truncate_objects`:  An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. You should truncate any objects you create. (Supports Fleunt and Versioned objects)
+*truncate_objects*
 
-Example:
+An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. You should truncate any objects you create. (Supports Fluent and Versioned objects)
+
 ```yaml
 DNADesign\Populate\Populate:
   truncate_objects:
+    - Page
     - SilverStripe\Assets\Image
 ```
 
-`truncate_tables`: An array of tables to be truncated. Useful when there's no relation between your populated classes and the table you want truncated
+*truncate_tables*
 
-Example:
+An array of tables to be truncated. Useful when there's no relation between your populated classes and the table you want truncated
+
 ```yaml
 DNADesign\Populate\Populate:
   truncate_tables:
@@ -102,6 +108,7 @@ clearing all of them.
 
 Populate uses the same `FixtureFactory` setup as SilverStripe's unit testing
 framework. The basic structure of which is:
+
 ```yaml
 ClassName:
   somereference:
@@ -127,11 +134,12 @@ published.
 Basic PHP operations can also be included in the YAML file. Any line that is
 wrapped in a ` character and ends with a semi colon will be evaled in the
 current scope of the importer.
+
 ```yaml
-	Page:
-	  mythankyoupage:
-	    ThankYouText: `Page::config()->thank_you_text`;
-	    LinkedPage: `sprintf("[Page](%s)", HelpPage::get()->first()->Link())`;
+Page:
+  mythankyoupage:
+    ThankYouText: "`Page::config()->thank_you_text`;"
+    LinkedPage: "`sprintf(\"[Page](%s)\", App\\Page\\HelpPage::get()->first()->Link())`;"
 ```
 
 ### Updating Records
@@ -145,24 +153,28 @@ options for this.
 
 Contains a WHERE clause to match e.g `"URLSegment = 'home' AND ParentID = 0"`.
 
-	Mysite\PageTypes\HomePage:
-	  home:
-	    Title: "My awesome homepage"
-	    PopulateMergeWhen: "URLSegment = 'home' AND ParentID = 0"
+```yaml
+Mysite\PageTypes\HomePage:
+  home:
+    Title: "My awesome homepage"
+    PopulateMergeWhen: "URLSegment = 'home' AND ParentID = 0"
+```
 
 ### `PopulateMergeMatch`
 
 Takes a list of fields defined in the YAML and matches them based on the
 database to avoid repeating content
 
-	Mysite\PageTypes\HomePage:
-	  home:
-	  	Title: "My awesome homepage"
-	  	URLSegment: 'home'
-	  	ParentID: 0
-	  	PopulateMergeMatch:
-	  	  - URLSegment
-	  	  - ParentID
+```yaml
+Mysite\PageTypes\HomePage:
+  home:
+    Title: "My awesome homepage"
+    URLSegment: 'home'
+    ParentID: 0
+    PopulateMergeMatch:
+      - URLSegment
+      - ParentID
+```
 
 ### `PopulateMergeAny`
 
@@ -170,10 +182,12 @@ Takes the first record in the database and merges with that. This option is
 suitable for things like `SiteConfig` where you normally only contain a single
 record.
 
-	SilverStripe\SiteConfig\SiteConfig:
-	  mysiteconfig:
-	  	Tagline: "SilverStripe is awesome"
-	  	PopulateMergeAny: true
+```yaml
+SilverStripe\SiteConfig\SiteConfig:
+  mysiteconfig:
+    Tagline: "SilverStripe is awesome"
+    PopulateMergeAny: true
+```
 
 If the criteria meets more than 1 instance, all instances bar the first are
 removed from the database so ensure you criteria is specific enough to get the
@@ -185,7 +199,7 @@ The script also handles creating default File and image records through the
 `PopulateFileFrom` flag. This copies the file from another path (say mysite) and
 puts the file inside your assets folder.
 
-```yml
+```yaml
 SilverStripe\Assets\Image:
   lgoptimusl3ii:
     Filename: assets/shop/lgoptimusl3ii.png
@@ -200,6 +214,16 @@ Mysite\PageTypes\Product:
 
 The module also provides extensions that can be opted into depending on your
 project needs
+
+## Publish configuration
+
+By default the module uses `publishSingle()` to publish records. If, for whatever reason, you would prefer to that the
+module uses `publishRecursive()`, you can enable this by settings the following configuration:
+
+```yaml
+DNADesign\Populate\Populate:
+  enable_publish_recursive: true
+```
 
 ### PopulateMySQLExport
 
@@ -220,3 +244,7 @@ DNADesign\Populate\Populate:
   extensions
     - DNADesign\Populate\PopulateMySQLExportExtension
 ```
+
+## Credits
+
+silverstripe-populate was originally created by [wilr](https://github.com/wilr) and [DNA Design](https://www.dna.co.nz/).
