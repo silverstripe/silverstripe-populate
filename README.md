@@ -149,7 +149,7 @@ current scope of the importer.
 
 ```yaml
 Page:
-    mythankyoupage:
+  mythankyoupage:
     ThankYouText: "`Page::config()->thank_you_text`;"
     LinkedPage: "`sprintf(\"[Page](%s)\", App\\Page\\HelpPage::get()->first()->Link())`;"
 ```
