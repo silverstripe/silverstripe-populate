@@ -13,24 +13,24 @@ objects can be defined in YAML and shared around developers. This extends the
 
 ## Installation Instructions
 
-This module is only ever used during the development phase of the project and has specific code to prevent it from being run in production. Therefore we recommend install it as a dev dependency in composer like so:
+This module must only ever be used in your development environment, and should never be used on production. While there is code to prevent it from being run in production, it is not fool-proof and therefore you must **never run this module in production**. Install it as a dev dependency in composer like so:
 ```
-composer require dnadesign/silverstripe-populate --dev
+composer require --dev dnadesign/silverstripe-populate
 ```
 
 ## Setup
 
-First create a new `yml` config file in your config directory `config/populate.yml` (you can use the default `_config.yml` if wanted).
+First create a new `yml` config file in your config directory `app/_config/populate.yml` (or add it to an existing `config.yml` file if you prefer).
 
 ```yaml
 DNADesign\Populate\Populate:
   include_yaml_fixtures:
-    - 'mysite/fixtures/populate.yml'
+    - 'app/fixtures/populate.yml'
 ```
 
 *If you're sharing test setup with populate, you can specify any number of paths to load fixtures from.*
 
-An example populate.yml might look like the following:
+An example `app/fixtures/populate.yml` might look like the following:
 
 ```yaml
 Page:
@@ -82,7 +82,7 @@ DNADesign\Populate\Populate:
 
 *truncate_objects*
 
-An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. You should truncate any objects you create. (Supports Fluent and Versioned objects)
+An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. It's recommended to truncate any objects you create, to ensure you can re-run `PopulateTask` as often as you want during development and get a consistent database state. This supports Versioned objects (like `SiteTree`) and [Fluent](https://addons.silverstripe.org/add-ons/tractorcow/silverstripe-fluent) (if the module is installed).
 
 ```yaml
 DNADesign\Populate\Populate:
