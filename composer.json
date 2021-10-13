@@ -9,6 +9,7 @@
         "email": "will@fullscreen.io"
     }],
     "require": {
+        "php": ">=7.1",
         "silverstripe/framework": "^4@stable",
         "silverstripe/versioned": "^1@dev"
     },
