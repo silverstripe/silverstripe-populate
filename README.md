@@ -9,8 +9,9 @@ objects can be defined in YAML and shared around developers. This extends the
 
 ## Requirements
 
- * PHP 7.1
- * SilverStripe 4 ([framework](https://github.com/silverstripe/silverstripe-framework) only)
+* PHP 7.1
+* SilverStripe [Framework ^4](https://github.com/silverstripe/silverstripe-framework)
+* SilverStripe [Versioned ^1](https://github.com/silverstripe/silverstripe-versioned)
 
 ## Installation Instructions
 
