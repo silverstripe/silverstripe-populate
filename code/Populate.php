@@ -97,9 +97,6 @@ class Populate
             $fixture = null;
         }
 
-        DB::alteration_message("");
-        DB::alteration_message("");
-        DB::alteration_message("Processing failed fixtures", "created");
         $factory->processFailedFixtures();
 
         $populate = Injector::inst()->create(Populate::class);
