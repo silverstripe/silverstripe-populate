@@ -9,13 +9,11 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Versioned\Versioned;
 
-
 /**
  * @package populate
  */
 class PopulateFactoryTest extends SapphireTest implements TestOnly
 {
-
     /**
      * @var PopulateFactory
      */
@@ -138,5 +136,4 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
         $this->assertEquals(1, $list->count());
         $this->assertEquals('Updated', $list->first()->Title);
     }
-
 }
