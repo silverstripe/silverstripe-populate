@@ -1,34 +1,23 @@
-language: php
+version: ~> 1.0
 
-dist: trusty
+import:
+  - silverstripe/silverstripe-travis-shared:config/provision/standard.yml
 
-cache:
-  directories:
-    - $HOME/.composer/cache/files
-
-env:
-  global:
-    - COMPOSER_ROOT_VERSION=1.0.x-dev
-
-matrix:
-  fast_finish: true
+jobs:
   include:
     - php: 7.1
-      env: DB=MYSQL PHPUNIT_TEST=1
+      env:
+        - DB=MYSQL
+        - REQUIRE_INSTALLER="4.x-dev"
+        - PHPUNIT_COVERAGE_TEST=1
+        - PHPCS_TEST=1
     - php: 7.3
-      env: DB=MYSQL PHPUNIT_TEST=1
-
-before_script:
-# Init PHP
-  - export CORE_RELEASE=$TRAVIS_BRANCH
-  - phpenv rehash
-  - phpenv config-rm xdebug.ini
-  - export PATH=~/.composer/vendor/bin:$PATH
-  - echo 'memory_limit = 2048M' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-
-# Install composer
-  - composer validate
-  - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
-
-script:
-  - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
+      env:
+        - DB=MYSQL
+        - REQUIRE_INSTALLER="4.x-dev"
+        - PHPUNIT_COVERAGE_TEST=1
+    - php: 7.4
+      env:
+        - DB=MYSQL
+        - REQUIRE_INSTALLER="4.x-dev"
+        - PHPUNIT_COVERAGE_TEST=1
