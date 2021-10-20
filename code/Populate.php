@@ -78,7 +78,8 @@ class Populate
             throw new Exception('requireRecords can only be run in development or test environments');
         }
 
-        $factory = Injector::inst()->create(Populate::class);
+        /** @var PopulateFactory $factory */
+        $factory = Injector::inst()->create(PopulateFactory::class);
 
         foreach (self::config()->get('truncate_objects') as $className) {
             self::truncateObject($className);
