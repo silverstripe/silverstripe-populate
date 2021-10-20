@@ -5,7 +5,6 @@ namespace DNADesign\Populate;
 use Exception;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
@@ -13,6 +12,7 @@ use SilverStripe\Dev\YamlFixture;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
+use SilverStripe\Versioned\Versioned;
 
 /**
  * @package populate
@@ -108,7 +108,7 @@ class Populate
     {
         $tables = [];
 
-        // All acenstors or children with tables
+        // All ancestors or children with tables
         $withTables = array_filter(
             array_merge(
                 ClassInfo::ancestry($className),
@@ -127,13 +127,13 @@ class Populate
 
         // Establish tables which store object data that needs to be truncated
         foreach ($classTables as $className => $baseTable) {
-            /** @var DataObject|SilverStripe\Versioned\Versioned $obj */
+            /** @var DataObject|Versioned $obj */
             $obj = Injector::inst()->get($className);
 
             // Include base tables
             $tables[$baseTable] = $baseTable;
 
-            if (!$obj->hasExtension('SilverStripe\Versioned\Versioned')) {
+            if (!$obj->hasExtension(Versioned::class)) {
                 // No versioned tables to clear
                 continue;
             }
