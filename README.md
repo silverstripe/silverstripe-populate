@@ -1,6 +1,6 @@
 # Populate Module
 
-[![Build Status](https://secure.travis-ci.org/dnadesign/silverstripe-populate.png?branch=master)](http://travis-ci.org/dnadesign/silverstripe-populate)
+[![Build Status](https://app.travis-ci.com/silverstripe/silverstripe-populate.svg?branch=master)](http://travis-ci.org/dnadesign/silverstripe-populate)
 
 This module provides a way to populate a database from YAML fixtures and custom
 classes. For instance, when a building a web application the pages and default
@@ -9,7 +9,9 @@ objects can be defined in YAML and shared around developers. This extends the
 
 ## Requirements
 
- * SilverStripe 4 ([framework](https://github.com/silverstripe/silverstripe-framework) only)
+* PHP 7.1
+* SilverStripe [Framework ^4](https://github.com/silverstripe/silverstripe-framework)
+* SilverStripe [Versioned ^1](https://github.com/silverstripe/silverstripe-versioned)
 
 ## Installation Instructions
 

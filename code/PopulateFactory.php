@@ -84,8 +84,7 @@ class PopulateFactory extends FixtureFactory
             );
 
             unset($data['PopulateMergeWhen']);
-
-        } else if (isset($data['PopulateMergeMatch'])) {
+        } elseif (isset($data['PopulateMergeMatch'])) {
             $filter = [];
 
             foreach ($data['PopulateMergeMatch'] as $field) {
@@ -93,13 +92,13 @@ class PopulateFactory extends FixtureFactory
             }
 
             if (!$filter) {
-                throw new \Exception('Not a valid PopulateMergeMatch filter');
+                throw new Exception('Not a valid PopulateMergeMatch filter');
             }
 
             $lookup = DataList::create($class)->filter($filter);
 
             unset($data['PopulateMergeMatch']);
-        } else if (isset($data['PopulateMergeAny'])) {
+        } elseif (isset($data['PopulateMergeAny'])) {
             $lookup = DataList::create($class);
 
             unset($data['PopulateMergeAny']);
