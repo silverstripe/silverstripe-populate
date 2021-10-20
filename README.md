@@ -13,28 +13,24 @@ objects can be defined in YAML and shared around developers. This extends the
 
 ## Installation Instructions
 
-We normally just use Populate during the development phase of the project. After
-the project is live you may wish to remove the module from the repo. Otherwise everyone may be able to re-populate your database.
-
+This module must only ever be used in your development environment, and should never be used on production. While there is code to prevent it from being run in production, it is not fool-proof and therefore you must **never run this module in production**. Install it as a dev dependency in composer like so:
 ```
-composer require --dev "dnadesign/silverstripe-populate:^2"
+composer require --dev dnadesign/silverstripe-populate
 ```
 
 ## Setup
 
-In your application `mysite/_config.yml` file, specify the YAML fixtures you
-want to load.
+First create a new `yml` config file in your config directory `app/_config/populate.yml` (or add it to an existing `config.yml` file if you prefer).
 
 ```yaml
 DNADesign\Populate\Populate:
   include_yaml_fixtures:
-    - 'mysite/fixtures/populate.yml'
+    - 'app/fixtures/populate.yml'
 ```
 
-If you're sharing test setup with populate, you can specify any number of paths
-to load fixtures from.
+*If you're sharing test setup with populate, you can specify any number of paths to load fixtures from.*
 
-An example populate.yml might look like the following:
+An example `app/fixtures/populate.yml` might look like the following:
 
 ```yaml
 Page:
@@ -86,30 +82,23 @@ DNADesign\Populate\Populate:
 
 *truncate_objects*
 
-An array of ClassName's whose instances are to be removed from the database
-prior to importing. Useful to prevent multiple copies of populated content from
-being imported. You should truncate any objects you create.
-
-**mysite/_config/app.yml**
+An array of ClassName's whose instances are to be removed from the database prior to importing. Useful to prevent multiple copies of populated content from being imported. It's recommended to truncate any objects you create, to ensure you can re-run `PopulateTask` as often as you want during development and get a consistent database state. This supports Versioned objects (like `SiteTree`) and [Fluent](https://addons.silverstripe.org/add-ons/tractorcow/silverstripe-fluent) (if the module is installed).
 
 ```yaml
 DNADesign\Populate\Populate:
   truncate_objects:
     - Page
-    - Member
+    - SilverStripe\Assets\Image
 ```
 
-Truncating will automatically clear subclasses and versions. However it will not
-clear versions. You may need to describe any additional relation tables.
+*truncate_tables*
 
-**mysite/_config/app.yml**
+An array of tables to be truncated. Useful when there's no relation between your populated classes and the table you want truncated
 
 ```yaml
 DNADesign\Populate\Populate:
-  truncate_objects:
-    - Page
-    - Member
-    - Member_RelatedPages
+  truncate_tables:
+    - Image_Special_Table
 ```
 
 See *Updating Records* if you wish to merge new and old records rather than
@@ -127,11 +116,10 @@ ClassName:
 ```
 
 Relations are handled by referring to them by their reference value:
-
 ```yaml
 SilverStripe\Security\Member:
-  admin:
-    Email: "admin@example.com"
+    admin:
+      Email: "admin@example.com"
 
 Page:
   homepage:
