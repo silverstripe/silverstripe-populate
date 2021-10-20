@@ -92,7 +92,7 @@ class PopulateFactory extends FixtureFactory
             }
 
             if (!$filter) {
-                throw new \Exception('Not a valid PopulateMergeMatch filter');
+                throw new Exception('Not a valid PopulateMergeMatch filter');
             }
 
             $lookup = DataList::create($class)->filter($filter);
