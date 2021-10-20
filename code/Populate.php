@@ -3,6 +3,7 @@
 namespace DNADesign\Populate;
 
 use Exception;
+use SilverStripe\Assets\File;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
@@ -10,6 +11,7 @@ use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\YamlFixture;
 use SilverStripe\ORM\Connect\DatabaseException;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\Versioned\Versioned;
@@ -76,7 +78,8 @@ class Populate
             throw new Exception('requireRecords can only be run in development or test environments');
         }
 
-        $factory = Injector::inst()->create('DNADesign\Populate\PopulateFactory');
+        /** @var PopulateFactory $factory */
+        $factory = Injector::inst()->create(PopulateFactory::class);
 
         foreach (self::config()->get('truncate_objects') as $className) {
             self::truncateObject($className);
@@ -87,11 +90,14 @@ class Populate
         }
 
         foreach (self::config()->get('include_yaml_fixtures') as $fixtureFile) {
+            DB::alteration_message(sprintf('Processing %s', $fixtureFile), 'created');
             $fixture = new YamlFixture($fixtureFile);
             $fixture->writeInto($factory);
 
             $fixture = null;
         }
+
+        $factory->processFailedFixtures();
 
         $populate = Injector::inst()->create(Populate::class);
         $populate->extend('onAfterPopulateRecords');
@@ -106,6 +112,13 @@ class Populate
      */
     private static function truncateObject(string $className): void
     {
+        if (in_array($className, ClassInfo::subclassesFor(File::class))) {
+            foreach (DataList::create($className) as $obj) {
+                /** @var File $obj */
+                $obj->deleteFile();
+            }
+        }
+
         $tables = [];
 
         // All ancestors or children with tables
