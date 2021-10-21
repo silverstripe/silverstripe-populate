@@ -266,7 +266,7 @@ DNADesign\Populate\Populate:
 
 **DANGER ZONE:** Please understand that you are about to provide admins with the ability to run Populate on your
 production environment. Before setting this configuration you should understand and accept the risks related to the
-lose of production data.
+loss of production data.
 
 ```yaml
 DNADesign\Populate\Populate:
