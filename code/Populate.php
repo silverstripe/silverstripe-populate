@@ -74,7 +74,7 @@ class Populate
 
         self::$ran = true;
 
-        if (!(Director::isDev() || Director::isTest())) {
+        if (!self::canBuildOnEnvironment()) {
             throw new Exception('requireRecords can only be run in development or test environments');
         }
 
@@ -202,5 +202,16 @@ class Populate
         }
 
         self::$clearedTables[$table] = true;
+    }
+
+    private static function canBuildOnEnvironment(): bool
+    {
+        // Populate (by default) is allowed to run on dev and test environments
+        if (Director::isDev() || Director::isTest()) {
+            return true;
+        }
+
+        // Check if developer/s have specified that Populate can run on live
+        return (bool) self::config()->get('allow_build_on_live');
     }
 }
