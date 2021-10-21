@@ -265,7 +265,7 @@ DNADesign\Populate\Populate:
 ## Allow Populate to run on "live" environments
 
 **DANGER ZONE:** Please understand that you are about to provide admins with the ability to run Populate on your
-production environment. Before setting this configuration you should understand and accept the the risks related to the
+production environment. Before setting this configuration you should understand and accept the risks related to the
 lose of production data.
 
 ```yaml
