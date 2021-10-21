@@ -7,6 +7,21 @@ classes. For instance, when a building a web application the pages and default
 objects can be defined in YAML and shared around developers. This extends the
 `requireDefaultRecords` concept in SilverStripe's DataModel.
 
+* [Requirements](#requirements)
+* [Installation Instructions](#installation-instructions)
+* [Setup](#setup)
+* [Configuration options](#configuration-options)
+* [YAML Format](#yaml-format)
+    * [Updating Records](#updating-records)
+    * [`PopulateMergeWhen`](#populatemergewhen)
+    * [`PopulateMergeMatch`](#populatemergematch)
+    * [`PopulateMergeAny`](#populatemergeany)
+    * [Default Assets](#default-assets)
+* [Extensions](#extensions)
+    * [PopulateMySQLExport](#populatemysqlexport)
+* [Publish configuration](#publish-configuration)
+* [Allow Populate to run on "live" environments](#allow-populate-to-run-on-live-environments)
+
 ## Requirements
 
 * PHP 7.1
@@ -217,16 +232,6 @@ Mysite\PageTypes\Product:
 The module also provides extensions that can be opted into depending on your
 project needs
 
-## Publish configuration
-
-By default the module uses `publishSingle()` to publish records. If, for whatever reason, you would prefer to that the
-module uses `publishRecursive()`, you can enable this by settings the following configuration:
-
-```yaml
-DNADesign\Populate\Populate:
-  enable_publish_recursive: true
-```
-
 ### PopulateMySQLExport
 
 This extension outputs the result of the Populate::requireDefaultRecords() as a
@@ -245,6 +250,27 @@ DNADesign\Populate\PopulateMySQLExportExtension:
 DNADesign\Populate\Populate:
   extensions
     - DNADesign\Populate\PopulateMySQLExportExtension
+```
+
+## Publish configuration
+
+By default the module uses `publishSingle()` to publish records. If, for whatever reason, you would prefer to that the
+module uses `publishRecursive()`, you can enable this by settings the following configuration:
+
+```yaml
+DNADesign\Populate\Populate:
+  enable_publish_recursive: true
+```
+
+## Allow Populate to run on "live" environments
+
+**DANGER ZONE:** Please understand that you are about to provide admins with the ability to run Populate on your
+production environment. Before setting this configuration you should understand and accept the the risks related to the
+lose of production data.
+
+```yaml
+DNADesign\Populate\Populate:
+  allow_build_on_live: true
 ```
 
 ## Credits
