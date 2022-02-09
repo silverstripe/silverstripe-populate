@@ -6,8 +6,8 @@ use Exception;
 use InvalidArgumentException;
 use SilverStripe\Assets\File;
 use SilverStripe\Assets\Folder;
-use SilverStripe\Assets\Image;
 use SilverStripe\Assets\Storage\AssetStore;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\FixtureBlueprint;
 use SilverStripe\Dev\FixtureFactory;
 use SilverStripe\ORM\DataList;
@@ -251,7 +251,9 @@ class PopulateFactory extends FixtureFactory
                 return true;
             }
         } else {
-            $file = Image::create();
+            // Create instance of file data object based on the extension of the fixture file
+            $fileClass = File::get_class_for_file_extension(File::get_file_extension($fixtureFilePath));
+            $file = Injector::inst()->create($fileClass);
         }
 
         $folder = Folder::find_or_make(dirname($filenameWithoutAssets));
