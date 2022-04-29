@@ -5,6 +5,9 @@ namespace DNADesign\Populate\Tests;
 use DNADesign\Populate\PopulateFactory;
 use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestObject;
 use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestVersionedObject;
+use SilverStripe\Assets\File;
+use SilverStripe\Assets\Image;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Versioned\Versioned;
@@ -135,5 +138,29 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
 
         $this->assertEquals(1, $list->count());
         $this->assertEquals('Updated', $list->first()->Title);
+    }
+
+    /**
+     * Test to ensure creating standard file such as PDF and image with correct DataObject file.
+     */
+    public function testCreatingFileOrImage()
+    {
+        // Collection of data to create file and image
+        $files = [
+            'file.txt' => File::class,
+            'image.png' => Image::class,
+        ];
+
+        // Create a file/image, check if data stored in database with expected DataObject class and file exists
+        foreach ($files as $name => $class) {
+            $this->factory->createObject(File::class, $name, [
+                'Filename' => $name,
+                'PopulateFileFrom' => sprintf('tests/assets/%s', $name),
+            ]);
+
+            $file = Injector::inst()->get($class)->get()->filter('Name', $name)->first();
+            $this->assertEquals($class, get_class($file));
+            $this->assertTrue($file->exists());
+        }
     }
 }
