@@ -248,7 +248,7 @@ class PopulateFactory extends FixtureFactory
             $hash = $existingObj->File->getHash();
 
             if (hash_equals($hash, sha1(file_get_contents($fixtureFilePath)))) {
-                return true;
+                return $file;
             }
         } else {
             // Create instance of file data object based on the extension of the fixture file
