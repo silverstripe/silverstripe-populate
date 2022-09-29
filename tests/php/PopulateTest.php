@@ -74,7 +74,7 @@ class PopulateTest extends SapphireTest
         $this->assertTrue($method->invoke(null));
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -85,7 +85,7 @@ class PopulateTest extends SapphireTest
         $this->environment = $kernel->getEnvironment();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         // Make sure we reset the environment mode at the end of the test
         /** @var Kernel $kernel */

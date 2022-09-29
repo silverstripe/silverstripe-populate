@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    uses: silverstripe/gha-ci/.github/workflows/ci.yml@v1
+    with:
+      dynamic_matrix: false
+      extra_jobs: |
+        - php: 7.4
+          phplinting: true
+        - php: 7.4
+          phpunit: true
+        - php: 8.0
+          phpunit: true
+        - php: 8.1
+          db: mysql57pdo
+          phpunit: true
+        - php: 8.1
+          db: mysql80
+          phpunit: true
+        - php: 8.1
+          phpunit: true
