@@ -1,6 +1,6 @@
 # Populate Module
 
-[![Build Status](https://app.travis-ci.com/silverstripe/silverstripe-populate.svg?branch=master)](http://travis-ci.org/dnadesign/silverstripe-populate)
+![Build Status](https://github.com/silverstripe/silverstripe-populate/actions/workflows/main.yml/badge.svg)
 
 This module provides a way to populate a database from YAML fixtures and custom
 classes. For instance, when a building a web application the pages and default

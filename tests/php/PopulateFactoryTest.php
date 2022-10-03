@@ -31,7 +31,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
         PopulateFactoryTestVersionedObject::class,
     ];
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->factory = new PopulateFactory();
@@ -42,7 +42,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      * staging tables should be updated. Other live records should be removed
      * as well.
      */
-    public function testVersionedObjects()
+    public function testVersionedObjects(): void
     {
         $versioned = $this->objFromFixture(PopulateFactoryTestVersionedObject::class, 'objV1');
 
@@ -69,7 +69,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      * As a utility you can include code to be evaluated the the yaml using
      * Field: `something::foo()`;
      */
-    public function testCreateObjectPhpEval()
+    public function testCreateObjectPhpEval(): void
     {
         $obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', [
             'Title' => '`sprintf("hi")`;',
@@ -83,7 +83,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      * record found, one should be created
      *
      */
-    public function testCreateObjectPopulateMergeWhen()
+    public function testCreateObjectPopulateMergeWhen(): void
     {
         $obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', [
             'Title' => 'Updated',
@@ -105,7 +105,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      * When populatemergematch is provided then the matching should be done on
      * the given fields
      */
-    public function testCreateObjectPopulateMergeMatch()
+    public function testCreateObjectPopulateMergeMatch(): void
     {
         $id = PopulateFactoryTestObject::get()->filter([
             'Title' => 'Foo',
@@ -127,7 +127,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      * When a lookup matches more than one page, only the first one should be
      * removed.
      */
-    public function testMultipleMatchesRemoved()
+    public function testMultipleMatchesRemoved(): void
     {
         $obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', [
             'Title' => 'Updated',

@@ -66,7 +66,7 @@ class PopulateMySQLExportExtension extends Extension
             $return .= 'DROP TABLE IF EXISTS `' . $table . '`;';
             $row2 = DB::query("SHOW CREATE TABLE `$table`");
             $create = $row2->nextRecord();
-            $create = str_replace("\"", "`", $create);
+            $create = str_replace("\"", "`", $create ?? '');
             $return .= "\n\n" . $create['Create Table'] . ";\n\n";
 
             $result = DB::query("SELECT * FROM `$table`");
@@ -76,7 +76,7 @@ class PopulateMySQLExportExtension extends Extension
 
                 foreach ($row as $k => $v) {
                     $v = addslashes($v);
-                    $v = str_replace("\n", "\\n", $v);
+                    $v = str_replace("\n", "\\n", $v ?? '');
 
                     if ($v) {
                         $return .= '"' . $v . '"';

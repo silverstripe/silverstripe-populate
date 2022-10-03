@@ -47,7 +47,7 @@ class PopulateFactory extends FixtureFactory
 
         if ($data) {
             foreach ($data as $k => $v) {
-                if (!(is_array($v)) && preg_match('/^`(.)*`;$/', $v)) {
+                if (!(is_array($v)) && preg_match('/^`(.)*`;$/', $v ?? '')) {
                     $str = substr($v, 1, -2);
                     $pv = null;
 
@@ -235,7 +235,7 @@ class PopulateFactory extends FixtureFactory
         }
 
         $fixtureFilePath = BASE_PATH . '/' . $data['PopulateFileFrom'];
-        $filenameWithoutAssets = str_replace('assets/', '', $data['Filename']);
+        $filenameWithoutAssets = str_replace('assets/', '', $data['Filename'] ?? '');
 
         // Find the existing object (if one exists)
         /** @var File $existingObj */
@@ -247,7 +247,7 @@ class PopulateFactory extends FixtureFactory
             // If the file hashes match, and the file already exists, we don't need to update anything.
             $hash = $existingObj->File->getHash();
 
-            if (hash_equals($hash, sha1(file_get_contents($fixtureFilePath)))) {
+            if (hash_equals($hash, sha1(file_get_contents($fixtureFilePath) ?? ''))) {
                 return true;
             }
         } else {
