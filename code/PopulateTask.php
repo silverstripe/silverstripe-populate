@@ -11,6 +11,8 @@ use SilverStripe\Dev\BuildTask;
  */
 class PopulateTask extends BuildTask
 {
+    private static $segment = 'PopulateTask';
+        
     /**
      * @param HTTPRequest $request
      * @throws Exception
