@@ -39,7 +39,7 @@ class Populate
      *
      * @var array
      */
-    private static $truncate_classes = [];
+    private static $truncate_objects = [];
 
     /**
      * @config
