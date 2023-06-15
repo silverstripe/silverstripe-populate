@@ -10,8 +10,8 @@
     }],
     "require": {
         "php": "^7.4 || ^8.0",
-        "silverstripe/framework": "^4",
-        "silverstripe/versioned": "^1"
+        "silverstripe/framework": "^5",
+        "silverstripe/versioned": "^2"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
@@ -27,6 +27,12 @@
     "extra": {
         "branch-alias": {
             "dev-master": "2.0.x-dev"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "silverstripe/vendor-plugin": true
         }
     }
 }
