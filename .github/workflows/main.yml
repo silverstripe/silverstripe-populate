@@ -17,19 +17,3 @@ jobs:
     with:
       # Turn phpcoverage off because it causes a segfault
       phpcoverage_force_off: true
-      dynamic_matrix: false
-      extra_jobs: |
-        - php: 7.4
-          phplinting: true
-        - php: 7.4
-          phpunit: true
-        - php: 8.0
-          phpunit: true
-        - php: 8.1
-          db: mysql57pdo
-          phpunit: true
-        - php: 8.1
-          db: mysql80
-          phpunit: true
-        - php: 8.1
-          phpunit: true
