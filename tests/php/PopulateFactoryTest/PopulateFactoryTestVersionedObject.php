@@ -6,16 +6,19 @@ use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Versioned\Versioned;
 
+/**
+ * @mixin Versioned
+ */
 class PopulateFactoryTestVersionedObject extends DataObject implements TestOnly
 {
-    private static $table_name = 'PopulateFactoryTestVersionedObject';
+    private static string $table_name = 'PopulateFactoryTestVersionedObject';
 
-    private static $db = [
+    private static array $db = [
         'Title' => 'Varchar',
         'Content' => 'Varchar',
     ];
 
-    private static $extensions = [
+    private static array $extensions = [
         Versioned::class . '.versioned',
     ];
 }

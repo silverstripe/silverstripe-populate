@@ -25,8 +25,6 @@ use SilverStripe\ORM\DB;
  *      extensions
  *        - PopulateMySQLExportExtension
  * </code>
- *
- * @package populate
  */
 class PopulateMySQLExportExtension extends Extension
 {

@@ -11,7 +11,9 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\FixtureBlueprint;
 use SilverStripe\Dev\FixtureFactory;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Versioned\Versioned;
 use function basename;
 use function dirname;
@@ -21,29 +23,26 @@ use function sha1;
 use function sizeof;
 use function str_replace;
 
-/**
- * @package populate
- */
 class PopulateFactory extends FixtureFactory
 {
     /**
      * List of fixtures that failed to be created due to YAML fixture lookup failures (e.g. because of a dependency that
      * isn't met at the time of creation). We re-try creation of these after all other fixtures have been created.
-     *
-     * @var array
      */
-    private $failedFixtures = [];
+    private array $failedFixtures = [];
 
     /**
      * Creates the object in the database as the original object will be wiped.
      *
-     * @param string $class
-     * @param string $identifier
-     * @param array $data
+     * @param string $name Name of the {@link FixtureBlueprint} to use, usually a DataObject subclass.
+     * @param string $identifier Unique identifier for this fixture type
+     * @param array $data Map of properties. Overrides default data
+     * @return bool|DataObject|null
+     * @throws ValidationException
      */
-    public function createObject($class, $identifier, $data = null)
+    public function createObject($name, $identifier, $data = null)
     {
-        DB::alteration_message("Creating $identifier ($class)", "created");
+        DB::alteration_message("Creating $identifier ($name)", "created");
 
         if ($data) {
             foreach ($data as $k => $v) {
@@ -65,11 +64,12 @@ class PopulateFactory extends FixtureFactory
 
             if ($file) {
                 // Skip the rest of this method (populateFile sets all other values on the object), just return the created file
-                if (!isset($this->fixtures[$class])) {
-                    $this->fixtures[$class] = [];
+                if (!isset($this->fixtures[$name])) {
+                    $this->fixtures[$name] = [];
                 }
 
-                $this->fixtures[$class][$identifier] = $file->ID;
+                $this->fixtures[$name][$identifier] = $file->ID;
+
                 return $file;
             }
         }
@@ -79,7 +79,7 @@ class PopulateFactory extends FixtureFactory
         $lookup = null;
 
         if (isset($data['PopulateMergeWhen'])) {
-            $lookup = DataList::create($class)->where(
+            $lookup = DataList::create($name)->where(
                 $data['PopulateMergeWhen']
             );
 
@@ -95,11 +95,11 @@ class PopulateFactory extends FixtureFactory
                 throw new Exception('Not a valid PopulateMergeMatch filter');
             }
 
-            $lookup = DataList::create($class)->filter($filter);
+            $lookup = DataList::create($name)->filter($filter);
 
             unset($data['PopulateMergeMatch']);
         } elseif (isset($data['PopulateMergeAny'])) {
-            $lookup = DataList::create($class);
+            $lookup = DataList::create($name);
 
             unset($data['PopulateMergeAny']);
         }
@@ -121,7 +121,7 @@ class PopulateFactory extends FixtureFactory
                 $old->delete();
             }
 
-            $blueprint = new FixtureBlueprint($class);
+            $blueprint = new FixtureBlueprint($name);
             $obj = $blueprint->createObject($identifier, $data, $this->fixtures);
             $latest = $obj->toMap();
 
@@ -132,16 +132,16 @@ class PopulateFactory extends FixtureFactory
 
             $obj->delete();
 
-            $this->fixtures[$class][$identifier] = $existing->ID;
+            $this->fixtures[$name][$identifier] = $existing->ID;
 
             $obj = $existing;
             $obj->flushCache();
         } else {
             try {
-                $obj = parent::createObject($class, $identifier, $data);
+                $obj = parent::createObject($name, $identifier, $data);
             } catch (InvalidArgumentException $e) {
                 $this->failedFixtures[] = [
-                    'class' => $class,
+                    'class' => $name,
                     'id' => $identifier,
                     'data' => $data,
                 ];
@@ -149,7 +149,7 @@ class PopulateFactory extends FixtureFactory
                 DB::alteration_message(sprintf('Exception: %s', $e->getMessage()), 'error');
 
                 DB::alteration_message(
-                    sprintf('Failed to create %s (%s), queueing for later', $identifier, $class),
+                    sprintf('Failed to create %s (%s), queueing for later', $identifier, $name),
                     'error'
                 );
 
@@ -174,7 +174,7 @@ class PopulateFactory extends FixtureFactory
      * @param bool $recurse Marker for whether we are recursing - should be false when calling from outside this method
      * @throws Exception
      */
-    public function processFailedFixtures($recurse = false)
+    public function processFailedFixtures(bool $recurse = false): void
     {
         if (!$this->failedFixtures) {
             DB::alteration_message('No failed fixtures to process', 'created');
@@ -225,10 +225,10 @@ class PopulateFactory extends FixtureFactory
 
     /**
      * @param array $data
-     * @return File|bool The created (or updated) File object
+     * @return File|bool The created (or updated) File object, or true if the file already existed
      * @throws Exception If anything is missing and the file can't be processed
      */
-    private function populateFile($data)
+    private function populateFile(array $data): File|bool
     {
         if (!isset($data['Filename']) || !isset($data['PopulateFileFrom'])) {
             throw new Exception('When passing "PopulateFileFrom", you must also pass "Filename" with the path that you want to file to be stored at (e.g. assets/test.jpg)');
@@ -285,6 +285,7 @@ class PopulateFactory extends FixtureFactory
             $file->write();
             $file->publishRecursive();
         } catch (Exception $e) {
+            throw $e;
             DB::alteration_message($e->getMessage(), "error");
         }
 

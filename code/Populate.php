@@ -16,57 +16,37 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\Versioned\Versioned;
 
-/**
- * @package populate
- */
 class Populate
 {
     use Configurable;
     use Extensible;
 
-    /**
-     * @config
-     *
-     * @var array
-     */
-    private static $include_yaml_fixtures = [];
+    private static array $include_yaml_fixtures = [];
 
     /**
-     * @config
-     *
      * An array of classes to clear from the database before importing. While
      * populating SiteTree it may be worth clearing the 'SiteTree' table.
-     *
-     * @var array
      */
-    private static $truncate_classes = [];
+    private static array $truncate_classes = [];
 
-    /**
-     * @config
-     *
-     * @var array - Tables that will be truncated
-     */
-    private static $truncate_tables = [];
+    private static array $truncate_tables = [];
 
     /**
      * Flag to determine if we're already run for this session (i.e to prevent
      * parent calls invoking {@link requireRecords} twice).
-     *
-     * @var bool
      */
-    private static $ran = false;
+    private static bool $ran = false;
 
     /**
-     * @var string[] - Used internally to not truncate multiple tables multiple times
+     * Used internally to not truncate multiple tables multiple times
      */
-    private static $clearedTables = [];
+    private static array $clearedTables = [];
 
     /**
      * @param bool $force - allows you to bypass the ran check to run this multiple times
-     * @return bool
      * @throws Exception
      */
-    public static function requireRecords($force = false): bool
+    public static function requireRecords(bool $force = false): bool
     {
         if (self::$ran && !$force) {
             return true;
@@ -107,8 +87,6 @@ class Populate
 
     /**
      * Delete all the associated tables for a class
-     *
-     * @param string $className
      */
     private static function truncateObject(string $className): void
     {
@@ -182,8 +160,6 @@ class Populate
     /**
      * Attempts to truncate a table. Outputs messages to indicate if table has
      * already been truncated or cannot be truncated
-     *
-     * @param string $table
      */
     private static function truncateTable(string $table): void
     {
