@@ -7,14 +7,10 @@ use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestObject;
 use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestVersionedObject;
 use SilverStripe\Assets\File;
 use SilverStripe\Assets\Image;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\Versioned\Versioned;
 
-/**
- * @package populate
- */
 class PopulateFactoryTest extends SapphireTest implements TestOnly
 {
     /**
@@ -46,7 +42,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
     {
         $versioned = $this->objFromFixture(PopulateFactoryTestVersionedObject::class, 'objV1');
 
-        $versioned->publish('Stage', 'Live');
+        $versioned->publishSingle();
 
         $obj = $this->factory->createObject(PopulateFactoryTestVersionedObject::class, 'test', [
             'Content' => 'Updated Version Foo',
@@ -153,14 +149,19 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
 
         // Create a file/image, check if data stored in database with expected DataObject class and file exists
         foreach ($files as $name => $class) {
-            $this->factory->createObject(File::class, $name, [
-                'Filename' => $name,
-                'PopulateFileFrom' => sprintf('tests/assets/%s', $name),
-            ]);
+            // BASE_PATH is prepended to the file path during populateFile(), so we need to remove it here
+            $filePath = str_replace(BASE_PATH, '', sprintf('%s/../assets/%s', dirname(__FILE__), $name));
+            $file = $this->factory->createObject(
+                File::class,
+                $name,
+                [
+                    'Filename' => $name,
+                    'PopulateFileFrom' => $filePath,
+                ]
+            );
 
-            $file = Injector::inst()->get($class)->get()->filter('Name', $name)->first();
-            $this->assertEquals($class, get_class($file));
-            $this->assertTrue($file->exists());
+            $this->assertTrue((bool) $file?->exists());
+            $this->assertEquals($class, $file->ClassName);
         }
     }
 }

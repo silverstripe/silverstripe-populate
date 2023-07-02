@@ -4,20 +4,21 @@ namespace DNADesign\Populate\Tests\PopulateFactoryTest;
 
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Versioned\Versioned;
 
 /**
- * @package populate
+ * @mixin Versioned
  */
 class PopulateFactoryTestObject extends DataObject implements TestOnly
 {
-    private static $table_name = 'PopulateFactoryTestObject';
+    private static string $table_name = 'PopulateFactoryTestObject';
 
-    private static $db = [
+    private static array $db = [
         'Title' => 'Varchar',
         'Content' => 'Varchar',
     ];
 
-    private static $has_one = [
+    private static array $has_one = [
         'RelatedTest' => PopulateFactoryTestObject::class,
     ];
 }
