@@ -256,11 +256,18 @@ class PopulateFactory extends FixtureFactory
             $file = Injector::inst()->create($fileClass);
         }
 
-        $folder = Folder::find_or_make(dirname($filenameWithoutAssets));
+        $fileFolder = dirname($filenameWithoutAssets);
         $filename = basename($filenameWithoutAssets);
+        $folder = null;
+
+        // Create a folder if the YML configuration indicates that the file should be created within a folder
+        if ($fileFolder !== '.') {
+            $folder = Folder::find_or_make($fileFolder);
+            $fileFolder = $folder->getFilename();
+        }
 
         // We could just use $data['Filename'], but we need to allow for filsystem abstraction
-        $filePath = File::join_paths($folder->getFilename(), $filename);
+        $filePath = File::join_paths($fileFolder, $filename);
 
         $fileCfg = [
             // if there's a filename conflict we've got new content so overwrite it.
@@ -281,7 +288,7 @@ class PopulateFactory extends FixtureFactory
             $file->setFromString(file_get_contents($fixtureFilePath), $filePath, null, null, $fileCfg);
             // Setting ParentID needs to come after setFromString() as (at least sometimes) setFromString() resets the
             // file Parent back to the "Uploads" folder
-            $file->ParentID = $folder->ID;
+            $file->ParentID = $folder instanceof Folder ? $folder->ID : 0;
             $file->write();
             $file->publishRecursive();
         } catch (Exception $e) {
