@@ -10,11 +10,11 @@
     }],
     "require": {
         "php": "^8.1",
-        "silverstripe/framework": "^5",
-        "silverstripe/versioned": "^2"
+        "silverstripe/framework": "~6.0.0@beta",
+        "silverstripe/versioned": "~3.0.0@beta"
     },
     "require-dev": {
-        "silverstripe/recipe-testing": "^3",
+        "silverstripe/recipe-testing": "4.x-dev",
         "squizlabs/php_codesniffer": "^3.0"
     },
     "autoload": {
