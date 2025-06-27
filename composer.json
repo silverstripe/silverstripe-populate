@@ -9,7 +9,7 @@
         "email": "will@fullscreen.io"
     }],
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "silverstripe/framework": "^6.0",
         "silverstripe/versioned": "^3.0"
     },
@@ -26,7 +26,7 @@
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "3.0.x-dev"
+            "dev-master": "4.0.x-dev"
         }
     },
     "config": {

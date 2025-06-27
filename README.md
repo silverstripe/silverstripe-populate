@@ -24,7 +24,7 @@ objects can be defined in YAML and shared around developers. This extends the
 
 ## Requirements
 
-* PHP 8.1
+* PHP 8.3
 * SilverStripe [Framework ^6](https://github.com/silverstripe/silverstripe-framework)
 * SilverStripe [Versioned ^3](https://github.com/silverstripe/silverstripe-versioned)
 
