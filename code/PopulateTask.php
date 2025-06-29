@@ -3,19 +3,22 @@
 namespace DNADesign\Populate;
 
 use Exception;
-use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\BuildTask;
+use SilverStripe\PolyExecution\PolyOutput;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 
 class PopulateTask extends BuildTask
 {
-    private static string $segment = 'PopulateTask';
+    protected static string $commandName = 'PopulateTask';
 
     /**
-     * @param HTTPRequest $request
      * @throws Exception
      */
-    public function run($request)
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
         Populate::requireRecords();
+
+        return Command::SUCCESS;
     }
 }
