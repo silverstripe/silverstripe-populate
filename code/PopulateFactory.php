@@ -225,10 +225,10 @@ class PopulateFactory extends FixtureFactory
 
     /**
      * @param array $data
-     * @return File|bool The created (or updated) File object, or true if the file already existed
+     * @return File The created, updated, or existing File object
      * @throws Exception If anything is missing and the file can't be processed
      */
-    private function populateFile(array $data): File|bool
+    private function populateFile(array $data): File
     {
         if (!isset($data['Filename']) || !isset($data['PopulateFileFrom'])) {
             throw new Exception('When passing "PopulateFileFrom", you must also pass "Filename" with the path that you want to file to be stored at (e.g. assets/test.jpg)');
@@ -248,7 +248,7 @@ class PopulateFactory extends FixtureFactory
             $hash = $existingObj->File->getHash();
 
             if (hash_equals($hash, sha1(file_get_contents($fixtureFilePath) ?? ''))) {
-                return true;
+                return $existingObj;
             }
         } else {
             // Create instance of file data object based on the extension of the fixture file
@@ -285,8 +285,9 @@ class PopulateFactory extends FixtureFactory
             $file->write();
             $file->publishRecursive();
         } catch (Exception $e) {
-            throw $e;
             DB::alteration_message($e->getMessage(), "error");
+
+            throw $e;
         }
 
         return $file;
