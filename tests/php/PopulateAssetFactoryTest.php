@@ -22,7 +22,7 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
 
     protected $usesDatabase = true;
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->factory = new PopulateFactory();

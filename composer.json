@@ -24,11 +24,13 @@
     },
     "require-dev": {
         "silverstripe/recipe-testing": "^4.0",
-        "squizlabs/php_codesniffer": "^3.0"
+        "squizlabs/php_codesniffer": "^3.0",
+        "cambis/silverstan": "dev-main",
+        "phpstan/extension-installer": "1.4.x-dev"
     },
     "autoload": {
         "psr-4": {
-            "DNADesign\\Populate\\": "code/",
+            "DNADesign\\Populate\\": "src/",
             "DNADesign\\Populate\\Tests\\": "tests/php/"
         }
     },
@@ -48,5 +50,10 @@
             "silverstripe/vendor-plugin": true,
             "silverstripe/recipe-plugin": true
         }
+    },
+    "scripts": {
+        "lint": "phpcs --standard=phpcs.xml.dist src tests",
+        "lint:fix": "phpcbf --standard=phpcs.xml.dist src tests",
+        "test": "phpunit"
     }
 }

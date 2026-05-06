@@ -15,6 +15,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Versioned\Versioned;
+
 use function basename;
 use function dirname;
 use function file_get_contents;
@@ -63,7 +64,8 @@ class PopulateFactory extends FixtureFactory
             $file = $this->populateFile($data);
 
             if ($file) {
-                // Skip the rest of this method (populateFile sets all other values on the object), just return the created file
+                // Skip the rest of this method (populateFile sets all other
+                // values on the object), just return the created file
                 if (!isset($this->fixtures[$name])) {
                     $this->fixtures[$name] = [];
                 }
@@ -231,7 +233,10 @@ class PopulateFactory extends FixtureFactory
     private function populateFile(array $data): File|bool
     {
         if (!isset($data['Filename']) || !isset($data['PopulateFileFrom'])) {
-            throw new Exception('When passing "PopulateFileFrom", you must also pass "Filename" with the path that you want to file to be stored at (e.g. assets/test.jpg)');
+            throw new Exception(sprintf(
+                'When passing "PopulateFileFrom", you must also pass "Filename" with the path that you want to '.
+                'file to be stored at (e.g. assets/test.jpg)',
+            ));
         }
 
         $fixtureFilePath = BASE_PATH . '/' . $data['PopulateFileFrom'];
@@ -293,7 +298,6 @@ class PopulateFactory extends FixtureFactory
             $file->publishRecursive();
         } catch (Exception $e) {
             throw $e;
-            DB::alteration_message($e->getMessage(), "error");
         }
 
         return $file;

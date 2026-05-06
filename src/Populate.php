@@ -55,7 +55,9 @@ class Populate
         self::$ran = true;
 
         if (!self::canBuildOnEnvironment()) {
-            throw new Exception('requireRecords can only be run in development or test environments');
+            throw new Exception(
+                'requireRecords can only be run in dev or test (unless allow_build_on_live is true)'
+            );
         }
 
         /** @var PopulateFactory $factory */

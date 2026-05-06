@@ -5,3 +5,4 @@
 /resources
 /vendor
 /public
+.phpunit.result.cache
