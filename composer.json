@@ -53,8 +53,8 @@
         }
     },
     "scripts": {
-        "lint": "phpcs --standard=phpcs.xml.dist src tests",
-        "lint:fix": "phpcbf --standard=phpcs.xml.dist src tests",
+        "lint": "phpcs --standard=phpcs.xml.dist",
+        "lint:fix": "phpcbf --standard=phpcs.xml.dist",
         "test": "phpunit",
         "phpstan": "phpstan analyse src tests --level max --memory-limit=1G",
         "phpstan:fix": "phpstan analyse src tests --level max --fix --memory-limit=1G"
