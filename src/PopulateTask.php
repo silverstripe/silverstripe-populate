@@ -3,6 +3,7 @@
 namespace DNADesign\Populate;
 
 use Exception;
+use SilverStripe\Core\Environment;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\PolyExecution\PolyOutput;
 use Symfony\Component\Console\Command\Command;
@@ -17,6 +18,9 @@ class PopulateTask extends BuildTask
      */
     protected function execute(InputInterface $input, PolyOutput $output): int
     {
+        Environment::increaseTimeLimitTo();
+        Environment::increaseMemoryLimitTo();
+
         Populate::requireRecords();
 
         return Command::SUCCESS;
