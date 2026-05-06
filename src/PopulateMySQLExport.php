@@ -6,6 +6,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extension;
+use SilverStripe\Core\TempFolder;
 use SilverStripe\ORM\DB;
 
 /**
@@ -25,6 +26,8 @@ use SilverStripe\ORM\DB;
  *      extensions
  *        - PopulateMySQLExportExtension
  * </code>
+ *
+ * @extends Extension<Populate>
  */
 class PopulateMySQLExportExtension extends Extension
 {
@@ -33,25 +36,22 @@ class PopulateMySQLExportExtension extends Extension
     /**
      * @config
      */
-    private static $export_db_path;
+    private static ?string $export_db_path = null;
 
-    public function getPath()
+    public function getPath(): string
     {
-        $path = Config::inst()->get(__CLASS__, 'export_db_path');
+        $path = Config::inst()->get(self::class, 'export_db_path');
 
-        if (!$path) {
-            $path = Controller::join_links(TEMP_FOLDER . '/populate.sql');
-        } else {
-            $path = (substr($path, 0, 1) !== "/") ? Controller::join_links(BASE_PATH, $path) : $path;
+        if (!is_string($path) || $path === '') {
+            $path = Controller::join_links(TempFolder::getTempFolder(BASE_PATH), 'populate.sql');
+        } elseif (substr($path, 0, 1) !== '/') {
+            $path = Controller::join_links(BASE_PATH, $path);
         }
 
         return $path;
     }
 
-    /**
-     *
-     */
-    public function onAfterPopulateRecords()
+    public function onAfterPopulateRecords(): void
     {
         $path = $this->getPath();
 
@@ -61,23 +61,38 @@ class PopulateMySQLExportExtension extends Extension
         $return = '';
 
         foreach ($tables as $table) {
+            if (!is_string($table)) {
+                continue;
+            }
+
             $return .= 'DROP TABLE IF EXISTS `' . $table . '`;';
             $row2 = DB::query("SHOW CREATE TABLE `$table`");
-            $create = $row2->nextRecord();
-            $create = str_replace("\"", "`", $create ?? '');
-            $return .= "\n\n" . $create['Create Table'] . ";\n\n";
+            $createRow = $row2->record();
 
-            $result = DB::query("SELECT * FROM `$table`");
+            $createSql = $createRow['Create Table'] ?? null;
+            if (!is_string($createSql)) {
+                continue;
+            }
 
-            while ($row = $result->nextRecord()) {
+            $createSqlEscaped = str_replace('"', '`', $createSql);
+            $return .= "\n\n" . $createSqlEscaped . ";\n\n";
+
+            $selectResult = DB::query("SELECT * FROM `$table`");
+
+            foreach ($selectResult as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
                 $return .= 'INSERT INTO ' . $table . ' VALUES(';
 
-                foreach ($row as $k => $v) {
-                    $v = addslashes($v);
-                    $v = str_replace("\n", "\\n", $v ?? '');
+                foreach ($row as $v) {
+                    $cell = is_string($v) || is_numeric($v) ? (string) $v : '';
+                    $cell = addslashes($cell);
+                    $cell = str_replace("\n", "\\n", $cell);
 
-                    if ($v) {
-                        $return .= '"' . $v . '"';
+                    if ($cell !== '') {
+                        $return .= '"' . $cell . '"';
                     } else {
                         $return .= '""';
                     }
@@ -93,6 +108,11 @@ class PopulateMySQLExportExtension extends Extension
         $return .= "\n\n\n";
 
         $handle = fopen($path, 'w+');
+        if ($handle === false) {
+            DB::alteration_message(sprintf('Could not open %s for writing', $path), 'error');
+
+            return;
+        }
 
         fwrite($handle, $return);
         fclose($handle);

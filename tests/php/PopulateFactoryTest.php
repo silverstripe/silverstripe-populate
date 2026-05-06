@@ -49,6 +49,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             'PopulateMergeWhen' => "Title = 'Version Foo'",
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestVersionedObject::class, $obj);
         $this->assertEquals($versioned->ID, $obj->ID);
         $this->assertEquals('Updated Version Foo', $obj->Content);
 
@@ -58,6 +59,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             "Title = 'Version Foo'"
         );
 
+        $this->assertNotNull($check);
         $this->assertEquals('Updated Version Foo', $check->Content);
     }
 
@@ -71,6 +73,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             'Title' => '`sprintf("hi")`;',
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestObject::class, $obj);
         $this->assertEquals('hi', $obj->Title);
     }
 
@@ -86,6 +89,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             'PopulateMergeWhen' => "Title = 'Foo'",
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestObject::class, $obj);
         $this->assertEquals('Foo Content', $obj->Content, 'Records merged');
 
         $obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', [
@@ -93,6 +97,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             'PopulateMergeWhen' => "Title = 'This title is unknown'",
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestObject::class, $obj);
         $this->assertGreaterThan(0, $obj->ID);
         $this->assertEquals('Updated', $obj->Title);
     }
@@ -103,9 +108,11 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
      */
     public function testCreateObjectPopulateMergeMatch(): void
     {
-        $id = PopulateFactoryTestObject::get()->filter([
+        $existing = PopulateFactoryTestObject::get()->filter([
             'Title' => 'Foo',
-        ])->first()->ID;
+        ])->first();
+        $this->assertNotNull($existing);
+        $id = $existing->ID;
 
         $obj = $this->factory->createObject(PopulateFactoryTestObject::class, 'test', [
             'Title' => 'Foo',
@@ -115,6 +122,7 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             ],
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestObject::class, $obj);
         $this->assertEquals($id, $obj->ID, 'ID value has not changed');
         $this->assertEquals('This has been replaced', $obj->Content);
     }
@@ -130,16 +138,20 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
             'PopulateMergeAny' => true,
         ]);
 
+        $this->assertInstanceOf(PopulateFactoryTestObject::class, $obj);
+
         $list = PopulateFactoryTestObject::get();
 
         $this->assertEquals(1, $list->count());
-        $this->assertEquals('Updated', $list->first()->Title);
+        $first = $list->first();
+        $this->assertNotNull($first);
+        $this->assertEquals('Updated', $first->Title);
     }
 
     /**
      * Test to ensure creating standard file such as PDF and image with correct DataObject file.
      */
-    public function testCreatingFileOrImage()
+    public function testCreatingFileOrImage(): void
     {
         // Collection of data to create file and image
         $files = [
@@ -160,7 +172,8 @@ class PopulateFactoryTest extends SapphireTest implements TestOnly
                 ]
             );
 
-            $this->assertTrue((bool) $file?->exists());
+            $this->assertInstanceOf(File::class, $file);
+            $this->assertTrue($file->exists());
             $this->assertEquals($class, $file->ClassName);
         }
     }

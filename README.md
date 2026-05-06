@@ -1,6 +1,8 @@
 # Populate Module
 
 ![Build Status](https://github.com/silverstripe/silverstripe-populate/actions/workflows/main.yml/badge.svg)
+[![Version](http://img.shields.io/packagist/v/dnadesign/silverstripe-populate.svg?style=flat-square)](https://packagist.org/packages/dnadesign/silverstripe-populate)
+[![License](http://img.shields.io/packagist/l/dnadesign/silverstripe-populate.svg?style=flat-square)](LICENSE)
 
 This module provides a way to populate a database from YAML fixtures and custom
 classes. For instance, when a building a web application the pages and default
@@ -31,7 +33,8 @@ objects can be defined in YAML and shared around developers. This extends the
 ## Installation Instructions
 
 This module must only ever be used in your development environment, and should never be used on production. While there is code to prevent it from being run in production, it is not fool-proof and therefore you must **never run this module in production**. Install it as a dev dependency in composer like so:
-```
+
+```sh
 composer require --dev dnadesign/silverstripe-populate
 ```
 

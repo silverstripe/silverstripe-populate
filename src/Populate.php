@@ -3,6 +3,7 @@
 namespace DNADesign\Populate;
 
 use Exception;
+use InvalidArgumentException;
 use SilverStripe\Assets\File;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
@@ -27,7 +28,7 @@ class Populate
      * An array of classes to clear from the database before importing. While
      * populating SiteTree it may be worth clearing the 'SiteTree' table.
      */
-    private static array $truncate_classes = [];
+    private static array $truncate_objects = [];
 
     private static array $truncate_tables = [];
 
@@ -48,11 +49,11 @@ class Populate
      */
     public static function requireRecords(bool $force = false): bool
     {
-        if (self::$ran && !$force) {
+        if (self::config()->get('ran') && !$force) {
             return true;
         }
 
-        self::$ran = true;
+        self::config()->set('ran', true);
 
         if (!self::canBuildOnEnvironment()) {
             throw new Exception(
@@ -63,30 +64,18 @@ class Populate
         /** @var PopulateFactory $factory */
         $factory = Injector::inst()->create(PopulateFactory::class);
 
-        $truncateObjects = self::config()->get('truncate_objects');
-
-        if ($truncateObjects && is_array($truncateObjects)) {
-            foreach ($truncateObjects as $className) {
-                self::truncateObject($className);
-            }
+        foreach (self::stringListFromConfig(self::config()->get('truncate_objects'), 'truncate_objects') as $className) {
+            self::truncateObject($className);
         }
 
-        $truncateTables = self::config()->get('truncate_tables');
-
-        if ($truncateTables && is_array($truncateTables)) {
-            foreach ($truncateTables as $table) {
-                self::truncateTable($table);
-            }
+        foreach (self::stringListFromConfig(self::config()->get('truncate_tables'), 'truncate_tables') as $table) {
+            self::truncateTable($table);
         }
 
-        $includeYamlFixtures = self::config()->get('include_yaml_fixtures');
-
-        if ($includeYamlFixtures && is_array($includeYamlFixtures)) {
-            foreach ($includeYamlFixtures as $fixtureFile) {
-                DB::alteration_message(sprintf('Processing %s', $fixtureFile), 'created');
-                $fixture = new YamlFixture($fixtureFile);
-                $fixture->writeInto($factory);
-            }
+        foreach (self::stringListFromConfig(self::config()->get('include_yaml_fixtures'), 'include_yaml_fixtures') as $fixtureFile) {
+            DB::alteration_message(sprintf('Processing %s', $fixtureFile), 'created');
+            $fixture = YamlFixture::create($fixtureFile);
+            $fixture->writeInto($factory);
         }
 
         $factory->processFailedFixtures();
@@ -124,30 +113,40 @@ class Populate
 
         $classTables = [];
 
-        foreach ($withTables as $className) {
-            $classTables[$className] = DataObject::getSchema()->tableName($className);
+        foreach ($withTables as $withTableClass) {
+            $tableName = DataObject::getSchema()->tableName($withTableClass);
+            if (!is_string($tableName) || $tableName === '') {
+                continue;
+            }
+
+            $classTables[$withTableClass] = $tableName;
         }
 
         // Establish tables which store object data that needs to be truncated
-        foreach ($classTables as $className => $baseTable) {
-            /** @var DataObject|Versioned $obj */
-            $obj = Injector::inst()->get($className);
+        foreach ($classTables as $withTableClass => $baseTable) {
+            $obj = Injector::inst()->get($withTableClass);
+            if (!$obj instanceof DataObject) {
+                continue;
+            }
 
             // Include base tables
             $tables[$baseTable] = $baseTable;
 
-            if (!$obj->hasExtension(Versioned::class)) {
+            $versioned = $obj->getExtensionInstance(Versioned::class);
+            if (!$versioned instanceof Versioned) {
                 // No versioned tables to clear
                 continue;
             }
 
-            $stages = $obj->getVersionedStages();
+            foreach ($versioned->getVersionedStages() as $stage) {
+                if (!is_string($stage)) {
+                    continue;
+                }
 
-            foreach ($stages as $stage) {
-                $table = $obj->stageTable($baseTable, $stage);
+                $stagedTable = $versioned->stageTable($baseTable, $stage);
 
                 // Include staged table(s)
-                $tables[$table] = $table;
+                $tables[$stagedTable] = $stagedTable;
             }
 
             $versionedTable = "{$baseTable}_Versions";
@@ -159,8 +158,21 @@ class Populate
         $populate = Injector::inst()->create(Populate::class);
         $populate->extend('updateTruncateObjectTables', $tables, $className, $classTables);
 
+        if (!is_array($tables)) {
+            return;
+        }
+
+        $schema = DB::get_schema();
+        if ($schema === null) {
+            return;
+        }
+
         foreach ($tables as $table) {
-            if (!DB::get_schema()->hasTable($table)) {
+            if ($table === '') {
+                continue;
+            }
+
+            if (!$schema->hasTable($table)) {
                 // No table to clear
                 continue;
             }
@@ -175,7 +187,10 @@ class Populate
      */
     private static function truncateTable(string $table): void
     {
-        if (array_key_exists($table, self::$clearedTables)) {
+        $stored = self::config()->get('clearedTables');
+        $clearedTables = is_array($stored) ? $stored : [];
+
+        if (array_key_exists($table, $clearedTables)) {
             DB::alteration_message("$table already truncated", "deleted");
 
             return;
@@ -183,13 +198,45 @@ class Populate
 
         DB::alteration_message("Truncating table $table", "deleted");
 
+        $conn = DB::get_conn();
+        if ($conn === null) {
+            return;
+        }
+
         try {
-            DB::get_conn()->clearTable($table);
+            $conn->clearTable($table);
         } catch (DatabaseException $databaseException) {
             DB::alteration_message("Couldn't truncate table $table as it doesn't exist", "deleted");
         }
 
-        self::$clearedTables[$table] = true;
+        $clearedTables[$table] = true;
+        self::config()->set('clearedTables', $clearedTables);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function stringListFromConfig(mixed $value, string $configKey): array
+    {
+        if ($value === null || $value === []) {
+            return [];
+        }
+
+        if (!is_array($value)) {
+            throw new InvalidArgumentException(sprintf('%s must be a list of strings', $configKey));
+        }
+
+        $strings = [];
+
+        foreach ($value as $item) {
+            if (!is_string($item)) {
+                throw new InvalidArgumentException(sprintf('%s must contain only strings', $configKey));
+            }
+
+            $strings[] = $item;
+        }
+
+        return $strings;
     }
 
     private static function canBuildOnEnvironment(): bool

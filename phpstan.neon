@@ -1,0 +1,5 @@
+parameters:
+    bootstrapFiles:
+        - vendor/silverstripe/framework/src/includes/constants.php
+    # SilverStripe core PHPDoc is often stricter than runtime; avoid false positives on generics and extensions.
+    treatPhpDocTypesAsCertain: false

@@ -3,12 +3,9 @@
 namespace DNADesign\Populate\Tests;
 
 use DNADesign\Populate\PopulateFactory;
-use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestObject;
-use DNADesign\Populate\Tests\PopulateFactoryTest\PopulateFactoryTestVersionedObject;
 use SilverStripe\Assets\Image;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
-use SilverStripe\Versioned\Versioned;
 
 /**
  * Test populating files into assets folder.
@@ -31,7 +28,7 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
     /**
      * Assert that a file is loaded into the expected path within assets directory (Root path).
      */
-    public function testLoadingFileToRootAssetsDirectory()
+    public function testLoadingFileToRootAssetsDirectory(): void
     {
         // Load a file using populate factory
         $obj = $this->factory->createObject(Image::class, 'image1', [
@@ -39,15 +36,17 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
             'PopulateFileFrom' => 'tests/php/fixture/assets/image1.png',
         ]);
 
+        $this->assertInstanceOf(Image::class, $obj);
+
         // Assert that the file is created and exists in expected root directory of assets
         $this->assertEquals('./image1.png', $obj->getFilename());
-        $this->assertFileExists(__DIR__ . '/../../assets/image1.png');
+        $this->assertFileExists(ASSETS_PATH . '/image1.png');
     }
 
     /**
      * Assert that a file is loaded into the expected path within assets directory (Within folder)
      */
-    public function testLoadingFileToFolderInAssetsDirectory()
+    public function testLoadingFileToFolderInAssetsDirectory(): void
     {
         // Load a file using populate factory
         $obj = $this->factory->createObject(Image::class, 'image1', [
@@ -55,8 +54,10 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
             'PopulateFileFrom' => 'tests/php/fixture/assets/image1.png',
         ]);
 
+        $this->assertInstanceOf(Image::class, $obj);
+
         // Assert that the file is created and exists in expected root directory of assets
         $this->assertEquals('fixture/image1.png', $obj->getFilename());
-        $this->assertFileExists(__DIR__ . '/../../assets/fixture/image1.png');
+        $this->assertFileExists(ASSETS_PATH . '/fixture/image1.png');
     }
 }

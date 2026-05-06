@@ -10,7 +10,7 @@ use ReflectionClass;
 
 class PopulateTest extends SapphireTest
 {
-    private $environment = null;
+    private ?string $environment = null;
 
     public function testAllowOnDev(): void
     {
@@ -90,6 +90,7 @@ class PopulateTest extends SapphireTest
         // Make sure we reset the environment mode at the end of the test
         /** @var Kernel $kernel */
         $kernel = Injector::inst()->get(Kernel::class);
+        $this->assertNotNull($this->environment);
         $kernel->setEnvironment($this->environment);
 
         parent::tearDown();
