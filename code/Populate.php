@@ -61,20 +61,30 @@ class Populate
         /** @var PopulateFactory $factory */
         $factory = Injector::inst()->create(PopulateFactory::class);
 
-        foreach (self::config()->get('truncate_objects') as $className) {
-            self::truncateObject($className);
+        $truncateObjects = self::config()->get('truncate_objects');
+
+        if ($truncateObjects && is_array($truncateObjects)) {
+            foreach ($truncateObjects as $className) {
+                self::truncateObject($className);
+            }
         }
 
-        foreach (self::config()->get('truncate_tables') as $table) {
-            self::truncateTable($table);
+        $truncateTables = self::config()->get('truncate_tables');
+
+        if ($truncateTables && is_array($truncateTables)) {
+            foreach ($truncateTables as $table) {
+                self::truncateTable($table);
+            }
         }
 
-        foreach (self::config()->get('include_yaml_fixtures') as $fixtureFile) {
-            DB::alteration_message(sprintf('Processing %s', $fixtureFile), 'created');
-            $fixture = new YamlFixture($fixtureFile);
-            $fixture->writeInto($factory);
+        $includeYamlFixtures = self::config()->get('include_yaml_fixtures');
 
-            $fixture = null;
+        if ($includeYamlFixtures && is_array($includeYamlFixtures)) {
+            foreach ($includeYamlFixtures as $fixtureFile) {
+                DB::alteration_message(sprintf('Processing %s', $fixtureFile), 'created');
+                $fixture = new YamlFixture($fixtureFile);
+                $fixture->writeInto($factory);
+            }
         }
 
         $factory->processFailedFixtures();
