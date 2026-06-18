@@ -86,6 +86,13 @@ class PopulateFactory extends FixtureFactory
             }
 
             if ($file === true) {
+                // File already exists unchanged — register its ID so cross-record
+                // =>ClassName.identifier references in the same fixture file resolve correctly.
+                $filenameWithoutAssets = str_replace('assets/', '', (string) $fixtureData['Filename']);
+                $existingFile = File::find($filenameWithoutAssets);
+                if ($existingFile !== null && $existingFile->exists()) {
+                    $this->rememberFixtureIdentifier($name, $identifier, (int) $existingFile->ID);
+                }
                 return true;
             }
         }
