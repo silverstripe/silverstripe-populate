@@ -3,6 +3,7 @@
 namespace DNADesign\Populate\Tests;
 
 use DNADesign\Populate\PopulateFactory;
+use SilverStripe\Assets\Folder;
 use SilverStripe\Assets\Image;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Dev\TestOnly;
@@ -39,8 +40,12 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
         $this->assertInstanceOf(Image::class, $obj);
 
         // Assert that the file is created and exists in expected root directory of assets
-        $this->assertEquals('./image1.png', $obj->getFilename());
+        $this->assertEquals('image1.png', $obj->getFilename());
         $this->assertFileExists(ASSETS_PATH . '/image1.png');
+
+        // Assert that no folder is created for a file in the root directory
+        $this->assertSame(0, $obj->ParentID);
+        $this->assertSame(0, Folder::get()->count());
     }
 
     /**
@@ -59,5 +64,9 @@ class PopulateAssetFactoryTest extends SapphireTest implements TestOnly
         // Assert that the file is created and exists in expected root directory of assets
         $this->assertEquals('fixture/image1.png', $obj->getFilename());
         $this->assertFileExists(ASSETS_PATH . '/fixture/image1.png');
+
+        // Assert that the file is placed in the folder from its filename
+        $folder = Folder::find('fixture');
+        $this->assertSame($folder->ID, $obj->ParentID);
     }
 }

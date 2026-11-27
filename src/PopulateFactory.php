@@ -343,6 +343,7 @@ class PopulateFactory extends FixtureFactory
         $fileFolder = dirname($filenameWithoutAssets);
         $filename = basename($filenameWithoutAssets);
         $folder = null;
+        $filePath = $filename;
 
         // Create a folder if the YML configuration indicates that the file should be created within a folder
         if ($fileFolder !== '.') {
@@ -351,11 +352,9 @@ class PopulateFactory extends FixtureFactory
                 throw new Exception(sprintf('Could not create or resolve folder %s', $fileFolder));
             }
 
-            $fileFolder = $folder->getFilename();
+            // We could just use $data['Filename'], but we need to allow for filsystem abstraction
+            $filePath = File::join_paths($folder->getFilename(), $filename);
         }
-
-        // We could just use $data['Filename'], but we need to allow for filsystem abstraction
-        $filePath = File::join_paths($fileFolder, $filename);
 
         $fileCfg = [
             // if there's a filename conflict we've got new content so overwrite it.
